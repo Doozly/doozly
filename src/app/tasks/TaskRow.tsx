@@ -1,8 +1,9 @@
 import { Link } from "wouter";
-import { formatDue, inMyDay, isBefore, today } from "../../data/localDate.ts";
+import { formatDue, inMyDay, isBefore } from "../../data/localDate.ts";
 import type { Task } from "../../data/model.ts";
 import { isMenuKey, menuPointFor } from "../../ui/ContextMenu.tsx";
 import { Icon } from "../../ui/Icon.tsx";
+import { useToday } from "../../ui/useToday.ts";
 import { paths } from "../routes.ts";
 import { StarToggle } from "./StarToggle.tsx";
 import { TaskCheck } from "./TaskCheck.tsx";
@@ -16,6 +17,10 @@ interface TaskRowProps {
   pop: boolean;
   /** Step progress like "1 of 3", when the task has steps */
   steps?: string;
+  /** Shown in views across lists, so you know where a task lives */
+  listName?: string;
+  /** In My Day itself the "My Day" tag says nothing new */
+  hideMyDay?: boolean;
   onToggle: (task: Task) => void;
   onStar: (task: Task) => void;
   onMenu: (task: Task, at: { x: number; y: number }) => void;
@@ -27,16 +32,18 @@ export function TaskRow({
   selected,
   pop,
   steps,
+  listName,
+  hideMyDay,
   onToggle,
   onStar,
   onMenu,
 }: TaskRowProps) {
   const done = task.completedAt !== null;
   const hasNote = task.note.trim() !== "";
-  const now = today();
+  const now = useToday();
   const due = task.dueDate;
   const overdue = due !== null && !done && isBefore(due, now);
-  const myDay = inMyDay(task, now);
+  const myDay = !hideMyDay && inMyDay(task, now);
 
   return (
     <li
@@ -68,8 +75,9 @@ export function TaskRow({
         >
           {task.title}
         </Link>
-        {(myDay || due || steps || hasNote) && (
+        {(listName || myDay || due || steps || hasNote) && (
           <div className={styles.meta}>
+            {listName && <span>{listName}</span>}
             {myDay && (
               <span className={styles.metaIcon}>
                 <Icon name="myDay" size={14} />

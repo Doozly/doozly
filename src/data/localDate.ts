@@ -74,3 +74,33 @@ export function inMyDay(
 ): boolean {
   return task.myDay === now;
 }
+
+export type DueBucket =
+  | "Earlier"
+  | "Today"
+  | "Tomorrow"
+  | "This week"
+  | "Later";
+
+export const DUE_BUCKETS: DueBucket[] = [
+  "Earlier",
+  "Today",
+  "Tomorrow",
+  "This week",
+  "Later",
+];
+
+/** Sunday that ends the week of `d`. Weeks run Monday to Sunday, the UK way. */
+export function endOfWeek(d: LocalDate): LocalDate {
+  const weekday = toDate(d).getDay(); // Sunday is 0
+  return addDays(d, (7 - weekday) % 7);
+}
+
+/** Which Planned group a due date falls in */
+export function dueBucket(due: LocalDate, now: LocalDate = today()): DueBucket {
+  if (due < now) return "Earlier";
+  if (due === now) return "Today";
+  if (due === addDays(now, 1)) return "Tomorrow";
+  if (due <= endOfWeek(now)) return "This week";
+  return "Later";
+}

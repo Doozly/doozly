@@ -6,12 +6,14 @@ import { useAppState } from "../state/AppContext.tsx";
 import { IconButton } from "../ui/IconButton.tsx";
 import { Logo } from "../ui/Logo.tsx";
 import { NARROW, useMediaQuery } from "../ui/useMediaQuery.ts";
+import { useToday } from "../ui/useToday.ts";
 import { DetailPane } from "./DetailPane.tsx";
 import { ListPane } from "./ListPane.tsx";
 import { paths, useSelection } from "./routes.ts";
 import styles from "./Shell.module.css";
 import { Sidebar } from "./Sidebar.tsx";
 import { useUi } from "./uiStore.ts";
+import { isSmartId, listView, smartView } from "./views.ts";
 
 // Only needed once someone opens Settings, also it loads then
 const SettingsPanel = lazy(() =>
@@ -22,6 +24,7 @@ export function Shell() {
   const { listId, taskId } = useSelection();
   const [, navigate] = useLocation();
   const narrow = useMediaQuery(NARROW);
+  const now = useToday();
   const { sidebarCollapsed, toggleSidebar, drawerOpen, setDrawerOpen } =
     useUi();
   const list = useAppState((s) => (listId ? s.lists[listId] : undefined));
@@ -30,12 +33,21 @@ export function Shell() {
   // Stays mounted after the first open, so closing still animates
   const [settingsUsed, setSettingsUsed] = useState(false);
 
+  const view =
+    listId && isSmartId(listId)
+      ? smartView(listId, now)
+      : list && list.deletedAt === null
+        ? listView(list)
+        : null;
+
   // Unknown or deleted list, like an old link: go home
-  if (!list || list.deletedAt !== null) {
+  if (!view) {
     return <Redirect to={paths.list(INBOX_ID)} replace />;
   }
-  if (taskId && (!task || task.deletedAt !== null || task.listId !== list.id)) {
-    return <Redirect to={paths.list(list.id)} replace />;
+  // A smart list can open any task; a normal list only its own
+  const taskFits = task && (view.list === null || task.listId === view.id);
+  if (taskId && (!task || task.deletedAt !== null || !taskFits)) {
+    return <Redirect to={paths.list(view.id)} replace />;
   }
 
   const sidebarHidden = narrow || sidebarCollapsed;
@@ -82,8 +94,8 @@ export function Shell() {
         )}
         <main className={styles.main}>
           <ListPane
-            key={list.id}
-            list={list}
+            key={view.id}
+            view={view}
             onShowSidebar={
               sidebarHidden
                 ? () => (narrow ? setDrawerOpen(true) : toggleSidebar())
@@ -95,7 +107,7 @@ export function Shell() {
           <DetailPane
             key={task.id}
             task={task}
-            onClose={() => navigate(paths.list(list.id))}
+            onClose={() => navigate(paths.list(view.id))}
           />
         )}
       </div>

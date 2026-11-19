@@ -1,6 +1,8 @@
 import { expect, test } from "vitest";
 import {
   addDays,
+  dueBucket,
+  endOfWeek,
   formatDue,
   inMyDay,
   isBefore,
@@ -47,4 +49,42 @@ test("in My Day only on the day it was added", () => {
   expect(inMyDay({ myDay: "2026-11-19" }, "2026-11-19")).toBe(true);
   expect(inMyDay({ myDay: "2026-11-18" }, "2026-11-19")).toBe(false);
   expect(inMyDay({ myDay: null }, "2026-11-19")).toBe(false);
+});
+
+test("Planned buckets around the week, Monday to Sunday", () => {
+  const thu = "2026-11-19";
+  expect(dueBucket("2026-11-01", thu)).toBe("Earlier");
+  expect(dueBucket("2026-11-18", thu)).toBe("Earlier");
+  expect(dueBucket(thu, thu)).toBe("Today");
+  expect(dueBucket("2026-11-20", thu)).toBe("Tomorrow");
+  expect(dueBucket("2026-11-21", thu)).toBe("This week");
+  expect(dueBucket("2026-11-22", thu)).toBe("This week"); // Sunday ends it
+  expect(dueBucket("2026-11-23", thu)).toBe("Later"); // next Monday
+});
+
+test("at the end of the week there is no This week left", () => {
+  const sat = "2026-11-21";
+  expect(dueBucket("2026-11-22", sat)).toBe("Tomorrow");
+  expect(dueBucket("2026-11-23", sat)).toBe("Later");
+  const sun = "2026-11-22";
+  expect(endOfWeek(sun)).toBe(sun);
+  expect(dueBucket("2026-11-23", sun)).toBe("Tomorrow");
+  expect(dueBucket("2026-11-24", sun)).toBe("Later");
+});
+
+test("buckets cross month and year ends", () => {
+  expect(dueBucket("2026-12-01", "2026-11-30")).toBe("Tomorrow");
+  expect(dueBucket("2027-01-03", "2026-12-31")).toBe("This week");
+  expect(dueBucket("2027-01-04", "2026-12-31")).toBe("Later");
+  expect(dueBucket("2026-12-31", "2027-01-01")).toBe("Earlier");
+});
+
+test("clock changes don't move anything", () => {
+  // UK clocks go forward on 29 March 2026 and back on 25 October 2026
+  expect(addDays("2026-03-28", 1)).toBe("2026-03-29");
+  expect(addDays("2026-03-29", 1)).toBe("2026-03-30");
+  expect(dueBucket("2026-03-29", "2026-03-28")).toBe("Tomorrow");
+  expect(addDays("2026-10-25", 1)).toBe("2026-10-26");
+  expect(endOfWeek("2026-10-21")).toBe("2026-10-25");
+  expect(today(new Date(2026, 2, 29, 0, 30).getTime())).toBe("2026-03-29");
 });

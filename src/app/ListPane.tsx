@@ -1,36 +1,40 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { INBOX_ID, type List } from "../data/model.ts";
 import { useActions } from "../state/AppContext.tsx";
 import { menuPointFor } from "../ui/ContextMenu.tsx";
 import { IconButton } from "../ui/IconButton.tsx";
 import styles from "./ListPane.module.css";
 import { useListMenu } from "./lists/useListMenu.tsx";
+import { SuggestionsPanel } from "./myday/SuggestionsPanel.tsx";
 import { TaskList } from "./tasks/TaskList.tsx";
 import { useUi } from "./uiStore.ts";
+import type { View } from "./views.ts";
 
 interface ListPaneProps {
-  list: List;
+  view: View;
   /** Shown when the sidebar is hidden or a drawer */
   onShowSidebar?: () => void;
 }
 
-export function ListPane({ list, onShowSidebar }: ListPaneProps) {
-  const renaming = useUi((s) => s.renamingListId === list.id);
+export function ListPane({ view, onShowSidebar }: ListPaneProps) {
+  const { list } = view;
+  const renaming = useUi((s) => list !== null && s.renamingListId === list.id);
   const setRenaming = useUi((s) => s.setRenaming);
   const listMenu = useListMenu();
-  const canRename = list.id !== INBOX_ID;
+  const canRename = list !== null && list.id !== INBOX_ID;
+  const [suggesting, setSuggesting] = useState(false);
 
   useEffect(() => {
-    document.title = `${list.title} - Doozly`;
-  }, [list.title]);
+    document.title = `${view.title} - Doozly`;
+  }, [view.title]);
 
   return (
-    <div className={styles.pane} data-accent={list.accent}>
+    <div className={styles.pane} data-accent={view.accent}>
       <div className={styles.toolbar}>
         {onShowSidebar && (
           <IconButton icon="menu" label="Show lists" onPress={onShowSidebar} />
         )}
-        {renaming ? (
+        {renaming && list ? (
           <TitleEditor list={list} onDone={() => setRenaming(null)} />
         ) : (
           <h1 className={styles.title}>
@@ -45,18 +49,32 @@ export function ListPane({ list, onShowSidebar }: ListPaneProps) {
                 {list.title}
               </button>
             ) : (
-              list.title
+              view.title
             )}
           </h1>
         )}
-        <IconButton
-          icon="more"
-          label="List options"
-          onPress={(e) => listMenu.open(list, menuPointFor(e.target))}
-        />
+        {list && (
+          <IconButton
+            icon="more"
+            label="List options"
+            onPress={(e) => listMenu.open(list, menuPointFor(e.target))}
+          />
+        )}
+        {view.id === "my-day" && (
+          <IconButton
+            icon="suggestions"
+            label="Suggestions"
+            className={styles.end}
+            onPress={() => setSuggesting(true)}
+          />
+        )}
       </div>
-      <TaskList listId={list.id} />
+      {view.subtitle && <p className={styles.subtitle}>{view.subtitle}</p>}
+      <TaskList view={view} />
       {listMenu.element}
+      {view.id === "my-day" && (
+        <SuggestionsPanel isOpen={suggesting} onOpenChange={setSuggesting} />
+      )}
     </div>
   );
 }

@@ -1,17 +1,8 @@
-import {
-  Dialog,
-  Heading,
-  Label,
-  Modal,
-  ModalOverlay,
-  Radio,
-  RadioGroup,
-  Switch,
-} from "react-aria-components";
+import { Label, Radio, RadioGroup, Switch } from "react-aria-components";
 import type { Settings } from "../data/model.ts";
 import { useActions, useAppState } from "../state/AppContext.tsx";
 import { setting } from "../state/actions.ts";
-import { IconButton } from "../ui/IconButton.tsx";
+import { SidePanel } from "../ui/SidePanel.tsx";
 import styles from "./SettingsPanel.module.css";
 
 type Toggle = {
@@ -38,32 +29,14 @@ interface SettingsPanelProps {
 
 export function SettingsPanel({ isOpen, onOpenChange }: SettingsPanelProps) {
   return (
-    <ModalOverlay
+    <SidePanel
       isOpen={isOpen}
       onOpenChange={onOpenChange}
-      isDismissable
-      className={styles.overlay}
+      title="Settings"
+      closeLabel="Close settings"
     >
-      <Modal className={styles.sheet}>
-        <Dialog className={styles.dialog}>
-          {({ close }) => (
-            <>
-              <div className={styles.top}>
-                <Heading slot="title" className={styles.heading}>
-                  Settings
-                </Heading>
-                <IconButton
-                  icon="close"
-                  label="Close settings"
-                  onPress={close}
-                />
-              </div>
-              <SettingsForm />
-            </>
-          )}
-        </Dialog>
-      </Modal>
-    </ModalOverlay>
+      <SettingsForm />
+    </SidePanel>
   );
 }
 

@@ -1,56 +1,59 @@
 import { useState } from "react";
 import { Button } from "react-aria-components";
 import { useShallow } from "zustand/react/shallow";
-import { addDays, inMyDay, today } from "../../data/localDate.ts";
-import { INBOX_ID, type Task } from "../../data/model.ts";
+import {
+  addDays,
+  DUE_BUCKETS,
+  dueBucket,
+  inMyDay,
+  today,
+} from "../../data/localDate.ts";
+import {
+  INBOX_ID,
+  type List,
+  type LocalDate,
+  type Task,
+} from "../../data/model.ts";
 import { useActions, useAppState } from "../../state/AppContext.tsx";
 import { setting } from "../../state/actions.ts";
 import { byPosition } from "../../state/position.ts";
 import { ContextMenu, type MenuEntry } from "../../ui/ContextMenu.tsx";
 import { Icon } from "../../ui/Icon.tsx";
+import { useToday } from "../../ui/useToday.ts";
 import { useSelection } from "../routes.ts";
 import { useUi } from "../uiStore.ts";
+import type { View } from "../views.ts";
 import styles from "./TaskList.module.css";
 import { TaskRow } from "./TaskRow.tsx";
 import { useDeleteTask } from "./useDeleteTask.tsx";
 import { useToggleCompleted } from "./useToggleCompleted.ts";
 
-export function TaskList({ listId }: { listId: string }) {
+export function TaskList({ view }: { view: View }) {
   const { taskId } = useSelection();
+  const now = useToday();
+  const visible = (t: Task) => t.deletedAt === null && view.includes(t);
   const open = useAppState(
     useShallow((s) =>
       Object.values(s.tasks)
-        .filter(
-          (t) =>
-            t.listId === listId &&
-            t.deletedAt === null &&
-            t.completedAt === null,
-        )
-        .sort(byPosition),
+        .filter((t) => visible(t) && t.completedAt === null)
+        .sort(orderings[view.order]),
     ),
   );
   const done = useAppState(
     useShallow((s) =>
       Object.values(s.tasks)
-        .filter(
-          (t) =>
-            t.listId === listId &&
-            t.deletedAt === null &&
-            t.completedAt !== null,
-        )
+        .filter((t) => visible(t) && t.completedAt !== null)
         // Most recently finished first
         .sort((a, b) => (b.completedAt ?? 0) - (a.completedAt ?? 0)),
     ),
   );
-  const showCompleted = useAppState(
-    (s) => s.lists[listId]?.showCompleted ?? true,
-  );
+  const lists = useAppState((s) => s.lists);
   const progress = useAppState(useShallow(stepProgress));
   const starredFirst = useAppState((s) => setting(s, "moveStarredToTop"));
   const { toggleImportant, toggleMyDay, updateTask } = useActions();
   const setDue = (id: string, dueDate: string | null) =>
     updateTask(id, { dueDate });
-  const folded = useUi((s) => s.completedFolded[listId] ?? false);
+  const folded = useUi((s) => s.completedFolded[view.id] ?? false);
   const toggleFolded = useUi((s) => s.toggleCompleted);
   const toggleCompleted = useToggleCompleted();
   const deleting = useDeleteTask();
@@ -68,7 +71,14 @@ export function TaskList({ listId }: { listId: string }) {
     <TaskRow
       key={task.id}
       task={task}
-      listId={listId}
+      listId={view.id}
+      // Across lists each row says where it lives, unless a group heading does already
+      listName={
+        view.list || view.group === "list"
+          ? undefined
+          : lists[task.listId]?.title
+      }
+      hideMyDay={view.id === "my-day"}
       selected={task.id === taskId}
       pop={task.id === pop}
       steps={progress[task.id]}
@@ -78,30 +88,40 @@ export function TaskList({ listId }: { listId: string }) {
     />
   );
 
-  const empty = open.length === 0 && done.length === 0;
+  const ordered =
+    starredFirst && view.order === "position" ? starredOnTop(open) : open;
+  const empty = open.length === 0 && (done.length === 0 || !view.showCompleted);
 
   return (
     <>
-      <AddTask listId={listId} />
+      <AddTask view={view} />
 
       {empty ? (
-        <p className={styles.empty}>
-          {listId === INBOX_ID
-            ? "Tasks that aren't in any of your lists live here."
-            : "Nothing here yet. Add a task to get going."}
-        </p>
+        <p className={styles.empty}>{view.emptyText}</p>
+      ) : view.group !== "none" ? (
+        (view.group === "list"
+          ? groupByList(ordered, lists)
+          : groupByDue(ordered, now)
+        ).map(({ key, title, tasks }) => (
+          <section key={key} className={styles.group}>
+            <h2 className={styles.groupTitle}>{title}</h2>
+            <ul className={styles.tasks} aria-label={title}>
+              {tasks.map(row)}
+            </ul>
+          </section>
+        ))
       ) : (
         <ul className={styles.tasks} aria-label="Tasks">
-          {(starredFirst ? starredOnTop(open) : open).map(row)}
+          {ordered.map(row)}
         </ul>
       )}
 
-      {showCompleted && done.length > 0 && (
+      {view.showCompleted && done.length > 0 && (
         <section className={styles.completed}>
           <Button
             className={styles.completedToggle}
             aria-expanded={!folded}
-            onPress={() => toggleFolded(listId)}
+            onPress={() => toggleFolded(view.id)}
           >
             <Icon name={folded ? "chevronRight" : "chevronDown"} size={16} />
             Completed
@@ -133,6 +153,53 @@ export function TaskList({ listId }: { listId: string }) {
       {deleting.element}
     </>
   );
+}
+
+const orderings: Record<View["order"], (a: Task, b: Task) => number> = {
+  position: byPosition,
+  newest: (a, b) => b.createdAt - a.createdAt,
+  // Soonest first; same day keeps the newest on top
+  due: (a, b) =>
+    (a.dueDate ?? "").localeCompare(b.dueDate ?? "") ||
+    b.createdAt - a.createdAt,
+};
+
+interface Group {
+  key: string;
+  title: string;
+  tasks: Task[];
+}
+
+/** Tasks under their list, lists in sidebar order (Tasks first) */
+function groupByList(tasks: Task[], lists: Record<string, List>): Group[] {
+  const byList = new Map<string, Task[]>();
+  for (const t of tasks) {
+    byList.set(t.listId, [...(byList.get(t.listId) ?? []), t]);
+  }
+  return [...byList.entries()]
+    .flatMap(([id, tasks]) => {
+      const list = lists[id];
+      return list ? [{ list, tasks }] : [];
+    })
+    .sort((a, b) =>
+      a.list.id === INBOX_ID
+        ? -1
+        : b.list.id === INBOX_ID
+          ? 1
+          : byPosition(a.list, b.list),
+    )
+    .map(({ list, tasks }) => ({ key: list.id, title: list.title, tasks }));
+}
+
+/** Planned's Earlier / Today / Tomorrow / This week / Later, empty ones left out */
+function groupByDue(tasks: Task[], now: LocalDate): Group[] {
+  return DUE_BUCKETS.map((bucket) => ({
+    key: bucket,
+    title: bucket,
+    tasks: tasks.filter(
+      (t) => t.dueDate !== null && dueBucket(t.dueDate, now) === bucket,
+    ),
+  })).filter((g) => g.tasks.length > 0);
 }
 
 /** Starred ones first, keeping the user's order within each group */
@@ -188,7 +255,7 @@ function taskMenu(task: Task): MenuEntry[] {
   return entries;
 }
 
-function AddTask({ listId }: { listId: string }) {
+function AddTask({ view }: { view: View }) {
   const [title, setTitle] = useState("");
   const { addTask } = useActions();
 
@@ -197,7 +264,8 @@ function AddTask({ listId }: { listId: string }) {
       className={styles.add}
       onSubmit={(e) => {
         e.preventDefault();
-        if (addTask(listId, title)) setTitle("");
+        const { listId, fields } = view.newTask;
+        if (addTask(listId, title, fields)) setTitle("");
       }}
     >
       <Icon name="add" className={styles.addIcon} />

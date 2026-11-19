@@ -12,7 +12,6 @@ import {
   formatDue,
   isBefore,
   nextWeek,
-  today,
   weekdayOf,
 } from "../../data/localDate.ts";
 import type { LocalDate, Task } from "../../data/model.ts";
@@ -20,6 +19,7 @@ import { useActions } from "../../state/AppContext.tsx";
 import menu from "../../ui/ContextMenu.module.css";
 import { Icon } from "../../ui/Icon.tsx";
 import { IconButton } from "../../ui/IconButton.tsx";
+import { useToday } from "../../ui/useToday.ts";
 import styles from "./DueDate.module.css";
 
 const DueCalendar = lazy(() => import("./DueCalendar.tsx"));
@@ -36,7 +36,7 @@ export function DueDate({ task }: { task: Task }) {
   const { updateTask } = useActions();
   const [picking, setPicking] = useState(false);
   const trigger = useRef<HTMLButtonElement>(null);
-  const now = today();
+  const now = useToday();
   const due = task.dueDate;
   const overdue =
     due !== null && task.completedAt === null && isBefore(due, now);

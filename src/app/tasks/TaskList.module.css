@@ -84,3 +84,13 @@
   color: var(--color-text-secondary);
   font: var(--font-body);
 }
+
+.group + .group {
+  margin-top: var(--space-4);
+}
+
+.groupTitle {
+  margin: 0 0 var(--space-2);
+  color: var(--color-text-secondary);
+  font: var(--font-body-strong);
+}

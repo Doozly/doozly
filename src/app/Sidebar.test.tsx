@@ -5,6 +5,7 @@ import { INBOX_ID } from "../data/model.ts";
 import { renderApp } from "../test/render.tsx";
 import { setViewportWidth } from "../test/setup.ts";
 import { useUi } from "./uiStore.ts";
+import { SMART_IDS } from "./views.ts";
 
 beforeEach(() => {
   useUi.setState({ sidebarCollapsed: false, drawerOpen: false });
@@ -16,12 +17,20 @@ const linkNames = () =>
     .getAllByRole("link")
     .map((a) => a.textContent?.trim());
 
-test("Tasks comes first, then the user's lists in order", async () => {
+test("smart lists, then Tasks, then the user's lists in order", async () => {
   await renderApp("/", (a) => {
     a.addList("Groceries");
     a.addList("Holiday");
   });
-  expect(linkNames()).toEqual(["Tasks", "Groceries", "Holiday"]);
+  expect(linkNames()).toEqual([
+    "My Day",
+    "Important",
+    "Planned",
+    "All",
+    "Tasks",
+    "Groceries",
+    "Holiday",
+  ]);
 });
 
 test("each list shows how many tasks are still open", async () => {
@@ -67,7 +76,11 @@ test("Enter without a name makes Untitled list, then Untitled list (1)", async (
   const input = screen.getByRole("textbox", { name: "New list" });
   await userEvent.type(input, "{Enter}");
   await userEvent.type(input, "{Enter}");
-  expect(linkNames()).toEqual(["Tasks", "Untitled list", "Untitled list (1)"]);
+  expect(linkNames().slice(SMART_IDS.length)).toEqual([
+    "Tasks",
+    "Untitled list",
+    "Untitled list (1)",
+  ]);
 });
 
 test("Escape throws the typed name away", async () => {
@@ -75,7 +88,7 @@ test("Escape throws the typed name away", async () => {
   const input = screen.getByRole("textbox", { name: "New list" });
   await userEvent.type(input, "Nope{Escape}");
   expect(input).toHaveValue("");
-  expect(linkNames()).toEqual(["Tasks"]);
+  expect(linkNames().slice(SMART_IDS.length)).toEqual(["Tasks"]);
 });
 
 test("in the drawer, making a list closes it", async () => {

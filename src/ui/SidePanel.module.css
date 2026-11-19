@@ -1,0 +1,61 @@
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+  background: var(--color-scrim);
+}
+
+.overlay[data-entering] {
+  animation: fade var(--duration-normal) var(--ease-enter);
+}
+
+.overlay[data-exiting] {
+  animation: fade var(--duration-fast) var(--ease-exit) reverse;
+}
+
+.sheet {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: min(360px, 100vw);
+  overflow-y: auto;
+  background: var(--color-surface);
+  box-shadow: var(--shadow-high);
+}
+
+.sheet[data-entering] {
+  animation: slide-in var(--duration-normal) var(--ease-enter);
+}
+
+.sheet[data-exiting] {
+  animation: slide-in var(--duration-fast) var(--ease-exit) reverse;
+}
+
+.dialog {
+  outline: none;
+}
+
+.top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-3) var(--space-3) var(--space-3) var(--space-6);
+}
+
+.heading {
+  margin: 0;
+  font: var(--font-title);
+}
+
+@keyframes fade {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes slide-in {
+  from {
+    transform: translateX(100%);
+  }
+}

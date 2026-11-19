@@ -1,15 +1,16 @@
 import { Button } from "react-aria-components";
-import { inMyDay, today } from "../../data/localDate.ts";
+import { inMyDay } from "../../data/localDate.ts";
 import type { Task } from "../../data/model.ts";
 import { useActions } from "../../state/AppContext.tsx";
 import { Icon } from "../../ui/Icon.tsx";
 import { IconButton } from "../../ui/IconButton.tsx";
+import { useToday } from "../../ui/useToday.ts";
 // Same look as the due date row
 import styles from "./DueDate.module.css";
 
 export function MyDay({ task }: { task: Task }) {
   const { toggleMyDay } = useActions();
-  const added = inMyDay(task, today());
+  const added = inMyDay(task, useToday());
 
   return (
     <div className={styles.row} data-set={added || undefined}>

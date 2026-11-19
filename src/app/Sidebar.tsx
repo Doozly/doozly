@@ -1,16 +1,23 @@
 import { useState } from "react";
 import { Link, useLocation } from "wouter";
 import { useShallow } from "zustand/react/shallow";
-import { INBOX_ID, type List } from "../data/model.ts";
+import {
+  INBOX_ID,
+  type List,
+  type LocalDate,
+  type Task,
+} from "../data/model.ts";
 import { useActions, useAppState } from "../state/AppContext.tsx";
 import { uniqueTitle } from "../state/naming.ts";
 import { byPosition } from "../state/position.ts";
 import { isMenuKey, menuPointFor } from "../ui/ContextMenu.tsx";
-import { Icon, type IconName } from "../ui/Icon.tsx";
+import { Icon } from "../ui/Icon.tsx";
 import { IconButton } from "../ui/IconButton.tsx";
+import { useToday } from "../ui/useToday.ts";
 import { useListMenu } from "./lists/useListMenu.tsx";
 import { paths, useSelection } from "./routes.ts";
 import styles from "./Sidebar.module.css";
+import { listView, SMART_IDS, smartView, type View } from "./views.ts";
 
 interface SidebarProps {
   /** Wide screens get a button to hide the sidebar */
@@ -27,7 +34,8 @@ export function Sidebar({ onCollapse, onNavigate }: SidebarProps) {
         .sort(byPosition),
     ),
   );
-  const counts = useAppState(useShallow(openTaskCounts));
+  const now = useToday();
+  const counts = useAppState(useShallow((s) => openTaskCounts(s, now)));
   const listMenu = useListMenu({ onDone: onNavigate });
   const inbox = lists.find((l) => l.id === INBOX_ID);
   const own = lists.filter((l) => l.id !== INBOX_ID);
@@ -40,12 +48,19 @@ export function Sidebar({ onCollapse, onNavigate }: SidebarProps) {
         </div>
       )}
       <div className={styles.scroll}>
-        {/* Smart lists (My Day, Important, Planned, All) join Tasks up here in phase 3 */}
+        {/* Smart lists first, then the built-in Tasks list, like To Do */}
         <ul className={styles.section}>
+          {SMART_IDS.map((id) => (
+            <ListItem
+              key={id}
+              view={smartView(id, now)}
+              count={counts[id]}
+              onNavigate={onNavigate}
+            />
+          ))}
           {inbox && (
             <ListItem
-              list={inbox}
-              icon="tasks"
+              view={listView(inbox)}
               count={counts[inbox.id]}
               onNavigate={onNavigate}
               onMenu={listMenu.open}
@@ -57,8 +72,7 @@ export function Sidebar({ onCollapse, onNavigate }: SidebarProps) {
             {own.map((list) => (
               <ListItem
                 key={list.id}
-                list={list}
-                icon="list"
+                view={listView(list)}
                 count={counts[list.id]}
                 onNavigate={onNavigate}
                 onMenu={listMenu.open}
@@ -76,52 +90,57 @@ export function Sidebar({ onCollapse, onNavigate }: SidebarProps) {
   );
 }
 
-function openTaskCounts(s: {
-  tasks: Record<
-    string,
-    { listId: string; deletedAt: number | null; completedAt: number | null }
-  >;
-}): Record<string, number> {
+/** Open tasks per list id, and per smart list id */
+function openTaskCounts(
+  s: { tasks: Record<string, Task> },
+  now: LocalDate,
+): Record<string, number> {
   const counts: Record<string, number> = {};
+  const add = (key: string) => {
+    counts[key] = (counts[key] ?? 0) + 1;
+  };
+  const smart = SMART_IDS.map((id) => smartView(id, now));
   for (const t of Object.values(s.tasks)) {
-    if (t.deletedAt === null && t.completedAt === null) {
-      counts[t.listId] = (counts[t.listId] ?? 0) + 1;
-    }
+    if (t.deletedAt !== null || t.completedAt !== null) continue;
+    add(t.listId);
+    for (const v of smart) if (v.includes(t)) add(v.id);
   }
   return counts;
 }
 
 interface ListItemProps {
-  list: List;
-  icon: IconName;
+  view: View;
   count: number | undefined;
   onNavigate?: () => void;
-  onMenu: (list: List, at: { x: number; y: number }) => void;
+  /** Only real lists have a menu */
+  onMenu?: (list: List, at: { x: number; y: number }) => void;
 }
 
-function ListItem({ list, icon, count, onNavigate, onMenu }: ListItemProps) {
+function ListItem({ view, count, onNavigate, onMenu }: ListItemProps) {
   const { listId } = useSelection();
+  const { list } = view;
   return (
     <li>
       <Link
-        href={paths.list(list.id)}
+        href={paths.list(view.id)}
         className={styles.item}
-        aria-current={list.id === listId ? "page" : undefined}
-        data-accent={list.accent}
+        aria-current={view.id === listId ? "page" : undefined}
+        data-accent={view.accent}
         onClick={onNavigate}
         onContextMenu={(e) => {
+          if (!list || !onMenu) return;
           e.preventDefault();
           onMenu(list, { x: e.clientX, y: e.clientY });
         }}
         onKeyDown={(e) => {
-          if (isMenuKey(e)) {
+          if (list && onMenu && isMenuKey(e)) {
             e.preventDefault();
             onMenu(list, menuPointFor(e.currentTarget));
           }
         }}
       >
-        <Icon name={icon} />
-        <span className={styles.title}>{list.title}</span>
+        <Icon name={view.icon} />
+        <span className={styles.title}>{view.title}</span>
         {/* The space keeps title and count apart for screen readers, flex hides it */}{" "}
         {count ? (
           <span className={styles.count}>
