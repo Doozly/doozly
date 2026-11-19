@@ -1,9 +1,14 @@
-import { useEffect, useRef, useState } from "react";
-import { INBOX_ID, type List } from "../data/model.ts";
+import { useEffect, useState } from "react";
+import { INBOX_ID } from "../data/model.ts";
 import { useActions } from "../state/AppContext.tsx";
 import { menuPointFor } from "../ui/ContextMenu.tsx";
 import { IconButton } from "../ui/IconButton.tsx";
+import { InlineRename } from "../ui/InlineRename.tsx";
 import styles from "./ListPane.module.css";
+import {
+  SortAndGroupButtons,
+  SortAndGroupChips,
+} from "./lists/SortAndGroup.tsx";
 import { useListMenu } from "./lists/useListMenu.tsx";
 import { SuggestionsPanel } from "./myday/SuggestionsPanel.tsx";
 import { TaskList } from "./tasks/TaskList.tsx";
@@ -21,6 +26,7 @@ export function ListPane({ view, onShowSidebar }: ListPaneProps) {
   const renaming = useUi((s) => list !== null && s.renamingListId === list.id);
   const setRenaming = useUi((s) => s.setRenaming);
   const listMenu = useListMenu();
+  const { updateList } = useActions();
   const canRename = list !== null && list.id !== INBOX_ID;
   const [suggesting, setSuggesting] = useState(false);
 
@@ -29,13 +35,24 @@ export function ListPane({ view, onShowSidebar }: ListPaneProps) {
   }, [view.title]);
 
   return (
-    <div className={styles.pane} data-accent={view.accent}>
+    <div
+      className={styles.pane}
+      data-accent={view.accent}
+      // Lists saved before themes came along have no field for it
+      data-background={list?.background ?? undefined}
+    >
       <div className={styles.toolbar}>
         {onShowSidebar && (
           <IconButton icon="menu" label="Show lists" onPress={onShowSidebar} />
         )}
         {renaming && list ? (
-          <TitleEditor list={list} onDone={() => setRenaming(null)} />
+          <InlineRename
+            value={list.title}
+            label="List name"
+            className={styles.titleInput}
+            onSave={(title) => updateList(list.id, { title })}
+            onDone={() => setRenaming(null)}
+          />
         ) : (
           <h1 className={styles.title}>
             {canRename ? (
@@ -60,6 +77,11 @@ export function ListPane({ view, onShowSidebar }: ListPaneProps) {
             onPress={(e) => listMenu.open(list, menuPointFor(e.target))}
           />
         )}
+        {list && (
+          <div className={styles.end}>
+            <SortAndGroupButtons list={list} />
+          </div>
+        )}
         {view.id === "my-day" && (
           <IconButton
             icon="suggestions"
@@ -70,44 +92,12 @@ export function ListPane({ view, onShowSidebar }: ListPaneProps) {
         )}
       </div>
       {view.subtitle && <p className={styles.subtitle}>{view.subtitle}</p>}
+      {list && <SortAndGroupChips list={list} />}
       <TaskList view={view} />
       {listMenu.element}
       {view.id === "my-day" && (
         <SuggestionsPanel isOpen={suggesting} onOpenChange={setSuggesting} />
       )}
     </div>
-  );
-}
-
-function TitleEditor({ list, onDone }: { list: List; onDone: () => void }) {
-  const { updateList } = useActions();
-  const cancelled = useRef(false);
-
-  const save = (value: string) => {
-    const title = value.trim();
-    if (!cancelled.current && title && title !== list.title) {
-      updateList(list.id, { title });
-    }
-    onDone();
-  };
-
-  return (
-    <input
-      className={styles.titleInput}
-      aria-label="List name"
-      defaultValue={list.title}
-      maxLength={255}
-      // biome-ignore lint/a11y/noAutofocus: the user just asked to rename, the field is the point
-      autoFocus
-      onFocus={(e) => e.currentTarget.select()}
-      onBlur={(e) => save(e.currentTarget.value)}
-      onKeyDown={(e) => {
-        if (e.key === "Enter") e.currentTarget.blur();
-        if (e.key === "Escape") {
-          cancelled.current = true;
-          e.currentTarget.blur();
-        }
-      }}
-    />
   );
 }

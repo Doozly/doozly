@@ -7,6 +7,7 @@
 
 .toolbar {
   display: flex;
+  color: var(--pane-text, inherit);
   align-items: center;
   gap: var(--space-2);
   min-height: 64px;
@@ -16,9 +17,10 @@
   min-width: 0;
   margin: 0;
   overflow: hidden;
-  color: var(--accent);
+  color: var(--pane-title, var(--accent));
   font: var(--font-title-large);
   text-overflow: ellipsis;
+  text-shadow: var(--pane-shadow, none);
   white-space: nowrap;
 }
 
@@ -38,7 +40,7 @@
 }
 
 .titleButton:hover {
-  background: var(--color-surface-hover);
+  background: var(--pane-hover, var(--color-surface-hover));
 }
 
 .titleButton:focus-visible {
@@ -62,10 +64,19 @@
 
 .subtitle {
   margin: calc(-1 * var(--space-3)) 0 var(--space-4);
-  color: var(--color-text-secondary);
+  color: var(--pane-text, var(--color-text-secondary));
+  text-shadow: var(--pane-shadow, none);
   font: var(--font-body);
 }
 
 .end {
+  display: flex;
+  flex-shrink: 0;
+  gap: var(--space-1);
   margin-left: auto;
+}
+
+/* The dark focus ring would vanish on a background, the cards keep theirs */
+.pane[data-background] > .toolbar {
+  --color-focus: var(--pane-text);
 }

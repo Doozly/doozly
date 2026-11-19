@@ -1,6 +1,8 @@
+import { generateNKeysBetween } from "fractional-indexing";
 import { stamp } from "../data/clock.ts";
 import { today } from "../data/localDate.ts";
 import {
+  createGroup,
   createList,
   createStep,
   createTask,
@@ -62,6 +64,10 @@ export function createActions({ store, commit }: App) {
   const liveStep = (id: string) => {
     const s = get().steps[id];
     return s && s.deletedAt === null ? s : undefined;
+  };
+  const liveGroup = (id: string) => {
+    const g = get().groups[id];
+    return g && g.deletedAt === null ? g : undefined;
   };
   const liveList = (id: string) => {
     const l = get().lists[id];
@@ -159,6 +165,15 @@ export function createActions({ store, commit }: App) {
       const listId = to.listId ?? task?.listId;
       if (!task || !listId || !liveList(listId)) return null;
       const position = between(tasksIn(listId), to);
+      return commit({ tasks: [touch(task, { listId, position })] });
+    },
+
+    /** Into another list, on top or at the end like a new task would go */
+    moveTaskToList(id: string, listId: string): Undo | null {
+      const task = liveTask(id);
+      if (!task || task.listId === listId || !liveList(listId)) return null;
+      const top = setting(get(), "addNewTasksOnTop");
+      const position = atEnd(tasksIn(listId), top);
       return commit({ tasks: [touch(task, { listId, position })] });
     },
 
@@ -266,6 +281,69 @@ export function createActions({ store, commit }: App) {
       const groupId = to.groupId === undefined ? list.groupId : to.groupId;
       const position = between(sidebarLevel(groupId), to);
       return commit({ lists: [touch(list, { groupId, position })] });
+    },
+
+    /** Puts a list at the end of a group, or of the top level with null */
+    moveListToGroup(id: string, groupId: string | null): Undo | null {
+      const list = liveList(id);
+      if (!list || id === INBOX_ID) return null;
+      if (groupId !== null && !liveGroup(groupId)) return null;
+      const others = sidebarLevel(groupId).filter((x) => x.id !== id);
+      return commit({
+        lists: [touch(list, { groupId, position: atEnd(others, false) })],
+      });
+    },
+
+    addGroup(title: string): ListGroup {
+      const group = createGroup({
+        title: title.trim(),
+        position: atEnd(sidebarLevel(null), false),
+      });
+      commit({ groups: [group] });
+      return group;
+    },
+
+    updateGroup(id: string, patch: Editable<ListGroup>): Undo | null {
+      const group = liveGroup(id);
+      return group ? commit({ groups: [touch(group, patch)] }) : null;
+    },
+
+    /** Groups only live at the top level, between ungrouped lists and other groups */
+    moveGroup(id: string, to: Placement): Undo | null {
+      const group = liveGroup(id);
+      if (!group) return null;
+      const position = between(sidebarLevel(null), to);
+      return commit({ groups: [touch(group, { position })] });
+    },
+
+    /** Lists come out right where the group was, in their order, and the group goes */
+    ungroup(id: string): Undo | null {
+      const group = liveGroup(id);
+      if (!group) return null;
+      const inside = sidebarLevel(id).sort(byPosition);
+      const level = sidebarLevel(null).sort(byPosition);
+      const at = level.findIndex((x) => x.id === id);
+      const positions = generateNKeysBetween(
+        level[at - 1]?.position ?? null,
+        level[at + 1]?.position ?? null,
+        inside.length,
+      );
+      return commit({
+        groups: [tombstone(group)],
+        lists: inside.map((list, i) =>
+          touch(list as List, {
+            groupId: null,
+            position: positions[i] ?? list.position,
+          }),
+        ),
+      });
+    },
+
+    /** Only empty groups can be deleted, the lists in a group would need a home first */
+    deleteGroup(id: string): Undo | null {
+      const group = liveGroup(id);
+      if (!group || sidebarLevel(id).length > 0) return null;
+      return commit({ groups: [tombstone(group)] });
     },
 
     setSetting<K extends keyof Settings>(key: K, value: Settings[K]): Undo {

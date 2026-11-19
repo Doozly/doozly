@@ -13,7 +13,7 @@
 }
 
 .button[data-hovered] {
-  background: var(--color-surface-hover);
+  background: var(--pane-hover, var(--color-surface-hover));
 }
 
 .button[data-pressed] {

@@ -91,6 +91,12 @@
 [data-accent="teal"] {
   --accent: light-dark(#0a7570, #4fc6bd);
 }
+[data-accent="cyan"] {
+  --accent: light-dark(#0b6e86, #6cd0e6);
+}
+[data-accent="sky"] {
+  --accent: light-dark(#0a65a8, #7cc4f2);
+}
 [data-accent="blue"] {
   --accent: light-dark(#1f5fbf, #82acf5);
 }
@@ -100,8 +106,14 @@
 [data-accent="violet"] {
   --accent: light-dark(#7a3fb0, #c9a4f0);
 }
+[data-accent="purple"] {
+  --accent: light-dark(#8e2fa0, #e09cf0);
+}
 [data-accent="pink"] {
   --accent: light-dark(#b0306f, #f39cc6);
+}
+[data-accent="rose"] {
+  --accent: light-dark(#b02a4a, #f59aae);
 }
 [data-accent="red"] {
   --accent: light-dark(#bd3529, #f6958c);
@@ -111,6 +123,12 @@
 }
 [data-accent="amber"] {
   --accent: light-dark(#836000, #e6c15c);
+}
+[data-accent="brown"] {
+  --accent: light-dark(#7d5235, #d7a988);
+}
+[data-accent="olive"] {
+  --accent: light-dark(#5c6814, #bfc96a);
 }
 [data-accent="green"] {
   --accent: light-dark(#2c7a31, #82cf88);

@@ -1,4 +1,5 @@
 import type { Accent } from "../styles/accents.ts";
+import type { Background } from "../styles/backgrounds.ts";
 import { type Stamp, stamp } from "./clock.ts";
 
 // Everything that syncs is merged per record, so every record carries these
@@ -25,13 +26,18 @@ export interface ListSort {
   direction: "asc" | "desc";
 }
 
+/** Headings to split a list's tasks under, by the same fields it can sort on */
+export type GroupBy = SortBy;
+
 export interface List extends Entity {
   title: string;
   accent: Accent;
+  background: Background | null;
   groupId: string | null;
   position: Position;
   /** null means the user's own drag order */
   sort: ListSort | null;
+  group: GroupBy | null;
   showCompleted: boolean;
 }
 
@@ -105,8 +111,10 @@ export function createList(
   return {
     ...entity(fields.id),
     accent: "teal",
+    background: null,
     groupId: null,
     sort: null,
+    group: null,
     showCompleted: true,
     ...fields,
   };

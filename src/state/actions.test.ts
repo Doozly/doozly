@@ -97,6 +97,24 @@ test("moveTask can move to another list", async () => {
   ).toBeNull();
 });
 
+test("moveTaskToList puts it where a new task would go", async () => {
+  const { actions, state } = await testApp();
+  const list = actions.addList("Shopping");
+  actions.addTask(list.id, "Bread");
+  const milk = actions.addTask(INBOX_ID, "Milk");
+  const eggs = actions.addTask(INBOX_ID, "Eggs");
+  if (!milk || !eggs) throw new Error("no task");
+
+  actions.moveTaskToList(milk.id, list.id);
+  expect(titlesIn(state(), list.id)).toEqual(["Milk", "Bread"]);
+  actions.setSetting("addNewTasksOnTop", false);
+  actions.moveTaskToList(eggs.id, list.id);
+  expect(titlesIn(state(), list.id)).toEqual(["Milk", "Bread", "Eggs"]);
+
+  expect(actions.moveTaskToList(eggs.id, list.id)).toBeNull();
+  expect(actions.moveTaskToList(eggs.id, "nope")).toBeNull();
+});
+
 test("steps get added at the bottom and toggle", async () => {
   const { actions, state } = await testApp();
   const t = actions.addTask(INBOX_ID, "Shop");
@@ -221,4 +239,82 @@ test("My Day holds a task only on the day it was added", async () => {
   expect(state().tasks[t.id]?.myDay).toBe("2026-11-20");
   actions.toggleMyDay(t.id, "2026-11-20");
   expect(state().tasks[t.id]?.myDay).toBeNull();
+});
+
+const sidebarOrder = (state: AppState) => {
+  const live = <T extends { deletedAt: number | null }>(r: Record<string, T>) =>
+    Object.values(r).filter((x) => x.deletedAt === null);
+  const top = [
+    ...live(state.lists).filter((l) => l.groupId === null),
+    ...live(state.groups),
+  ].sort(byPosition);
+  return top.map((x) =>
+    "groupId" in x
+      ? x.title
+      : `${x.title}[${live(state.lists)
+          .filter((l) => l.groupId === x.id)
+          .sort(byPosition)
+          .map((l) => l.title)
+          .join(",")}]`,
+  );
+};
+
+test("lists move into a group at its end, and back out to the end", async () => {
+  const { actions, state } = await testApp();
+  const a = actions.addList("A");
+  const b = actions.addList("B");
+  const home = actions.addGroup("Home");
+  actions.moveListToGroup(a.id, home.id);
+  actions.moveListToGroup(b.id, home.id);
+  expect(sidebarOrder(state())).toEqual(["Tasks", "Home[A,B]"]);
+
+  actions.moveListToGroup(a.id, null);
+  expect(sidebarOrder(state())).toEqual(["Tasks", "Home[B]", "A"]);
+  expect(actions.moveListToGroup(a.id, "nope")).toBeNull();
+  expect(actions.moveListToGroup(INBOX_ID, home.id)).toBeNull();
+});
+
+test("groups reorder among the top-level lists", async () => {
+  const { actions, state } = await testApp();
+  const a = actions.addList("A");
+  const home = actions.addGroup("Home");
+  actions.moveGroup(home.id, { prevId: INBOX_ID, nextId: a.id });
+  expect(sidebarOrder(state())).toEqual(["Tasks", "Home[]", "A"]);
+  expect(actions.moveGroup("nope", { prevId: null, nextId: null })).toBeNull();
+});
+
+test("ungrouping puts the lists where the group was, in order", async () => {
+  const { actions, state } = await testApp();
+  actions.addList("Before");
+  const home = actions.addGroup("Home");
+  actions.addList("After");
+  const x = actions.addList("X");
+  const y = actions.addList("Y");
+  actions.moveListToGroup(x.id, home.id);
+  actions.moveListToGroup(y.id, home.id);
+  expect(sidebarOrder(state())).toEqual([
+    "Tasks",
+    "Before",
+    "Home[X,Y]",
+    "After",
+  ]);
+
+  actions.ungroup(home.id);
+  expect(sidebarOrder(state())).toEqual(["Tasks", "Before", "X", "Y", "After"]);
+  expect(state().groups[home.id]?.deletedAt).not.toBeNull();
+});
+
+test("only an empty group can be deleted, and groups rename", async () => {
+  const { actions, state } = await testApp();
+  const home = actions.addGroup("Home");
+  const list = actions.addList("A");
+  actions.moveListToGroup(list.id, home.id);
+  expect(actions.deleteGroup(home.id)).toBeNull();
+
+  actions.updateGroup(home.id, { title: "House" });
+  expect(state().groups[home.id]?.title).toBe("House");
+
+  actions.moveListToGroup(list.id, null);
+  expect(actions.deleteGroup(home.id)).not.toBeNull();
+  expect(state().groups[home.id]?.deletedAt).not.toBeNull();
 });

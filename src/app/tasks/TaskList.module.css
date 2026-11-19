@@ -47,7 +47,8 @@
 .empty {
   margin: var(--space-10) auto;
   max-width: 320px;
-  color: var(--color-text-secondary);
+  color: var(--pane-text, var(--color-text-secondary));
+  text-shadow: var(--pane-shadow, none);
   text-align: center;
 }
 
@@ -91,6 +92,7 @@
 
 .groupTitle {
   margin: 0 0 var(--space-2);
-  color: var(--color-text-secondary);
+  color: var(--pane-text, var(--color-text-secondary));
+  text-shadow: var(--pane-shadow, none);
   font: var(--font-body-strong);
 }

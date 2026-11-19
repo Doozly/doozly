@@ -87,3 +87,12 @@
 .due[data-overdue] {
   color: var(--color-danger);
 }
+
+/* The overlay follows the pointer, the row stays as a placeholder where it'll land */
+.row[data-dragging] {
+  opacity: 0.4;
+}
+
+.row {
+  -webkit-touch-callout: none;
+}

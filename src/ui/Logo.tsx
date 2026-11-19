@@ -16,6 +16,8 @@ export function Logo({ height = 32, ...rest }: LogoProps) {
     <svg
       // Tight around the glyphs, the baseline sits at y=0
       viewBox="7.2 -91.32 346.68 118.68"
+      // A real width too, or a grid or flex row can squeeze it to nothing
+      width={(height * 346.68) / 118.68}
       height={height}
       fill="currentColor"
       role="img"

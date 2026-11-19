@@ -1,28 +1,29 @@
+import {
+  SortableContext,
+  verticalListSortingStrategy,
+} from "@dnd-kit/sortable";
 import { useState } from "react";
 import { Button } from "react-aria-components";
 import { useShallow } from "zustand/react/shallow";
-import {
-  addDays,
-  DUE_BUCKETS,
-  dueBucket,
-  inMyDay,
-  today,
-} from "../../data/localDate.ts";
-import {
-  INBOX_ID,
-  type List,
-  type LocalDate,
-  type Task,
-} from "../../data/model.ts";
+import { addDays, inMyDay, today } from "../../data/localDate.ts";
+import type { Task } from "../../data/model.ts";
 import { useActions, useAppState } from "../../state/AppContext.tsx";
 import { setting } from "../../state/actions.ts";
-import { byPosition } from "../../state/position.ts";
 import { ContextMenu, type MenuEntry } from "../../ui/ContextMenu.tsx";
 import { Icon } from "../../ui/Icon.tsx";
 import { useToday } from "../../ui/useToday.ts";
+import { nudge } from "../dnd/reorder.ts";
 import { useSelection } from "../routes.ts";
 import { useUi } from "../uiStore.ts";
 import type { View } from "../views.ts";
+import {
+  defaultDirection,
+  groupByList,
+  groupTasks,
+  orderings,
+  sortTasks,
+  starredOnTop,
+} from "./arrange.ts";
 import styles from "./TaskList.module.css";
 import { TaskRow } from "./TaskRow.tsx";
 import { useDeleteTask } from "./useDeleteTask.tsx";
@@ -50,7 +51,7 @@ export function TaskList({ view }: { view: View }) {
   const lists = useAppState((s) => s.lists);
   const progress = useAppState(useShallow(stepProgress));
   const starredFirst = useAppState((s) => setting(s, "moveStarredToTop"));
-  const { toggleImportant, toggleMyDay, updateTask } = useActions();
+  const { toggleImportant, toggleMyDay, updateTask, moveTask } = useActions();
   const setDue = (id: string, dueDate: string | null) =>
     updateTask(id, { dueDate });
   const folded = useUi((s) => s.completedFolded[view.id] ?? false);
@@ -65,6 +66,20 @@ export function TaskList({ view }: { view: View }) {
 
   const toggle = (task: Task) => {
     setPop(toggleCompleted(task) ? task.id : null);
+  };
+
+  const { sort, group } = view;
+  const ordered = sort
+    ? sortTasks(open, sort, now)
+    : starredFirst && view.order === "position"
+      ? starredOnTop(open)
+      : open;
+  // Dragging and Alt+arrows only where the order on screen is the user's own
+  const reorderable = view.list !== null && !sort && group === "none";
+  const orderedIds = ordered.map((t) => t.id);
+  const move = (task: Task, by: -1 | 1) => {
+    const at = nudge(orderedIds, task.id, by);
+    if (at) moveTask(task.id, at);
   };
 
   const row = (task: Task) => (
@@ -85,35 +100,51 @@ export function TaskList({ view }: { view: View }) {
       onToggle={toggle}
       onStar={(t) => toggleImportant(t.id)}
       onMenu={(t, at) => setMenu({ task: t, ...at })}
+      onMove={reorderable && task.completedAt === null ? move : undefined}
     />
   );
 
-  const ordered =
-    starredFirst && view.order === "position" ? starredOnTop(open) : open;
+  const groups =
+    group === "none"
+      ? null
+      : group === "list"
+        ? groupByList(ordered, lists)
+        : groupTasks(
+            ordered,
+            group,
+            // Grouped and sorted by the same thing, the headings follow the sort
+            sort?.by === group ? sort.direction : defaultDirection[group],
+            now,
+          );
   const empty = open.length === 0 && (done.length === 0 || !view.showCompleted);
 
   return (
     <>
-      <AddTask view={view} />
+      {view.newTask && <AddTask newTask={view.newTask} />}
 
       {empty ? (
         <p className={styles.empty}>{view.emptyText}</p>
-      ) : view.group !== "none" ? (
-        (view.group === "list"
-          ? groupByList(ordered, lists)
-          : groupByDue(ordered, now)
-        ).map(({ key, title, tasks }) => (
+      ) : groups ? (
+        groups.map(({ key, title, tasks }) => (
           <section key={key} className={styles.group}>
             <h2 className={styles.groupTitle}>{title}</h2>
-            <ul className={styles.tasks} aria-label={title}>
-              {tasks.map(row)}
-            </ul>
+            <SortableContext id={key} items={tasks.map((t) => t.id)}>
+              <ul className={styles.tasks} aria-label={title}>
+                {tasks.map(row)}
+              </ul>
+            </SortableContext>
           </section>
         ))
       ) : (
-        <ul className={styles.tasks} aria-label="Tasks">
-          {ordered.map(row)}
-        </ul>
+        <SortableContext
+          id="open"
+          items={orderedIds}
+          strategy={verticalListSortingStrategy}
+        >
+          <ul className={styles.tasks} aria-label="Tasks">
+            {ordered.map(row)}
+          </ul>
+        </SortableContext>
       )}
 
       {view.showCompleted && done.length > 0 && (
@@ -128,9 +159,11 @@ export function TaskList({ view }: { view: View }) {
             <span className={styles.completedCount}>{done.length}</span>
           </Button>
           {!folded && (
-            <ul className={styles.tasks} aria-label="Completed tasks">
-              {done.map(row)}
-            </ul>
+            <SortableContext id="done" items={done.map((t) => t.id)}>
+              <ul className={styles.tasks} aria-label="Completed tasks">
+                {done.map(row)}
+              </ul>
+            </SortableContext>
           )}
         </section>
       )}
@@ -153,58 +186,6 @@ export function TaskList({ view }: { view: View }) {
       {deleting.element}
     </>
   );
-}
-
-const orderings: Record<View["order"], (a: Task, b: Task) => number> = {
-  position: byPosition,
-  newest: (a, b) => b.createdAt - a.createdAt,
-  // Soonest first; same day keeps the newest on top
-  due: (a, b) =>
-    (a.dueDate ?? "").localeCompare(b.dueDate ?? "") ||
-    b.createdAt - a.createdAt,
-};
-
-interface Group {
-  key: string;
-  title: string;
-  tasks: Task[];
-}
-
-/** Tasks under their list, lists in sidebar order (Tasks first) */
-function groupByList(tasks: Task[], lists: Record<string, List>): Group[] {
-  const byList = new Map<string, Task[]>();
-  for (const t of tasks) {
-    byList.set(t.listId, [...(byList.get(t.listId) ?? []), t]);
-  }
-  return [...byList.entries()]
-    .flatMap(([id, tasks]) => {
-      const list = lists[id];
-      return list ? [{ list, tasks }] : [];
-    })
-    .sort((a, b) =>
-      a.list.id === INBOX_ID
-        ? -1
-        : b.list.id === INBOX_ID
-          ? 1
-          : byPosition(a.list, b.list),
-    )
-    .map(({ list, tasks }) => ({ key: list.id, title: list.title, tasks }));
-}
-
-/** Planned's Earlier / Today / Tomorrow / This week / Later, empty ones left out */
-function groupByDue(tasks: Task[], now: LocalDate): Group[] {
-  return DUE_BUCKETS.map((bucket) => ({
-    key: bucket,
-    title: bucket,
-    tasks: tasks.filter(
-      (t) => t.dueDate !== null && dueBucket(t.dueDate, now) === bucket,
-    ),
-  })).filter((g) => g.tasks.length > 0);
-}
-
-/** Starred ones first, keeping the user's order within each group */
-function starredOnTop(tasks: Task[]): Task[] {
-  return [...tasks].sort((a, b) => Number(b.important) - Number(a.important));
 }
 
 /** "1 of 3" per task id, for tasks that have steps */
@@ -255,7 +236,7 @@ function taskMenu(task: Task): MenuEntry[] {
   return entries;
 }
 
-function AddTask({ view }: { view: View }) {
+function AddTask({ newTask }: { newTask: NonNullable<View["newTask"]> }) {
   const [title, setTitle] = useState("");
   const { addTask } = useActions();
 
@@ -264,7 +245,7 @@ function AddTask({ view }: { view: View }) {
       className={styles.add}
       onSubmit={(e) => {
         e.preventDefault();
-        const { listId, fields } = view.newTask;
+        const { listId, fields } = newTask;
         if (addTask(listId, title, fields)) setTitle("");
       }}
     >

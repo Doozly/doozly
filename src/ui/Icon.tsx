@@ -1,10 +1,13 @@
 import checkCircleFill from "@phosphor-icons/core/fill/check-circle-fill.svg?raw";
 import starFill from "@phosphor-icons/core/fill/star-fill.svg?raw";
+import arrowDown from "@phosphor-icons/core/regular/arrow-down.svg?raw";
 import arrowLeft from "@phosphor-icons/core/regular/arrow-left.svg?raw";
+import arrowUp from "@phosphor-icons/core/regular/arrow-up.svg?raw";
 import arrowsDownUp from "@phosphor-icons/core/regular/arrows-down-up.svg?raw";
 import bell from "@phosphor-icons/core/regular/bell.svg?raw";
 import calendarBlank from "@phosphor-icons/core/regular/calendar-blank.svg?raw";
 import calendarDots from "@phosphor-icons/core/regular/calendar-dots.svg?raw";
+import calendarPlus from "@phosphor-icons/core/regular/calendar-plus.svg?raw";
 import caretDown from "@phosphor-icons/core/regular/caret-down.svg?raw";
 import caretLeft from "@phosphor-icons/core/regular/caret-left.svg?raw";
 import caretRight from "@phosphor-icons/core/regular/caret-right.svg?raw";
@@ -37,6 +40,7 @@ import signOut from "@phosphor-icons/core/regular/sign-out.svg?raw";
 import squaresFour from "@phosphor-icons/core/regular/squares-four.svg?raw";
 import star from "@phosphor-icons/core/regular/star.svg?raw";
 import sun from "@phosphor-icons/core/regular/sun.svg?raw";
+import textAa from "@phosphor-icons/core/regular/text-aa.svg?raw";
 import trash from "@phosphor-icons/core/regular/trash.svg?raw";
 import userCircle from "@phosphor-icons/core/regular/user-circle.svg?raw";
 import warning from "@phosphor-icons/core/regular/warning.svg?raw";
@@ -66,6 +70,10 @@ const regular = {
   search: magnifyingGlass,
   settings: gear,
   sort: arrowsDownUp,
+  ascending: arrowUp,
+  descending: arrowDown,
+  alphabetical: textAa,
+  createdAt: calendarPlus,
   groupBy: squaresFour,
   theme: palette,
   more: dotsThree,

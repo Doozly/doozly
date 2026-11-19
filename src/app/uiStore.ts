@@ -20,10 +20,18 @@ interface UiState {
   completedFolded: Record<string, boolean>;
   /** The list whose title is being edited in the list header */
   renamingListId: string | null;
+  /** Group ids folded shut in the sidebar */
+  groupsFolded: Record<string, boolean>;
+  renamingGroupId: string | null;
+  /** What's typed in the search box. It's not in the URL, a reload starts a fresh search. */
+  search: string;
   toggleSidebar(): void;
   setDrawerOpen(open: boolean): void;
   toggleCompleted(listId: string): void;
   setRenaming(listId: string | null): void;
+  toggleGroup(groupId: string): void;
+  setRenamingGroup(groupId: string | null): void;
+  setSearch(search: string): void;
 }
 
 export const useUi = create<UiState>()((set, get) => ({
@@ -31,6 +39,9 @@ export const useUi = create<UiState>()((set, get) => ({
   drawerOpen: false,
   completedFolded: {},
   renamingListId: null,
+  groupsFolded: {},
+  renamingGroupId: null,
+  search: "",
   toggleSidebar() {
     const sidebarCollapsed = !get().sidebarCollapsed;
     set({ sidebarCollapsed });
@@ -49,5 +60,15 @@ export const useUi = create<UiState>()((set, get) => ({
   },
   setRenaming(renamingListId) {
     set({ renamingListId });
+  },
+  toggleGroup(groupId) {
+    const folded = get().groupsFolded;
+    set({ groupsFolded: { ...folded, [groupId]: !folded[groupId] } });
+  },
+  setRenamingGroup(renamingGroupId) {
+    set({ renamingGroupId });
+  },
+  setSearch(search) {
+    set({ search });
   },
 }));

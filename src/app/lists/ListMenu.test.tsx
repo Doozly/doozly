@@ -53,14 +53,14 @@ test("clicking the title renames, Escape cancels, empty keeps the old name", asy
   expect(heading()).toHaveTextContent("Groceries");
 });
 
-test("the Tasks list can't be renamed or deleted, only duplicated", async () => {
+test("the Tasks list can't be renamed or deleted, only themed and duplicated", async () => {
   await renderApp();
   expect(within(heading()).queryByRole("button", { name: "Tasks" })).toBeNull();
   fireEvent.contextMenu(sidebarLink("Tasks"));
   const items = (await screen.findAllByRole("menuitem")).map(
     (i) => i.textContent,
   );
-  expect(items).toEqual(["Duplicate list"]);
+  expect(items).toEqual(["Change theme", "Duplicate list"]);
 });
 
 test("duplicate from the list options opens the copy with its tasks", async () => {

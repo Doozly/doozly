@@ -1,0 +1,96 @@
+.anchor {
+  position: fixed;
+  width: 0;
+  height: 0;
+  pointer-events: none;
+}
+
+.popover {
+  width: min(304px, calc(100vw - var(--space-8)));
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-medium);
+}
+
+.popover[data-entering] {
+  animation: fade var(--duration-fast) var(--ease-enter);
+}
+
+.dialog {
+  display: grid;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4) var(--space-4);
+  outline: none;
+}
+
+.heading {
+  margin: 0;
+  color: var(--color-text-secondary);
+  font: var(--font-body-strong);
+  text-align: center;
+}
+
+.swatches,
+.backgrounds {
+  display: grid;
+  grid-template-columns: repeat(8, 1fr);
+  gap: var(--space-2);
+}
+
+.backgrounds {
+  grid-template-columns: repeat(3, 1fr);
+}
+
+.swatch,
+.background {
+  display: grid;
+  place-items: center;
+  border-radius: var(--radius-round);
+  color: transparent;
+  cursor: pointer;
+  outline: none;
+}
+
+.swatch {
+  aspect-ratio: 1;
+  background: var(--accent);
+}
+
+.background {
+  height: 48px;
+  border-radius: var(--radius-md);
+}
+
+.none {
+  border: 1px solid var(--color-border-strong);
+  background: var(--color-bg);
+}
+
+.swatch[data-selected] {
+  color: var(--accent-on);
+}
+
+.background[data-selected] {
+  color: var(--pane-text);
+}
+
+.none[data-selected] {
+  color: var(--color-text);
+}
+
+.swatch[data-focus-visible],
+.background[data-focus-visible] {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
+.swatch[data-hovered],
+.background[data-hovered] {
+  box-shadow: 0 0 0 2px var(--color-border-strong);
+}
+
+@keyframes fade {
+  from {
+    opacity: 0;
+  }
+}

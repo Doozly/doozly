@@ -1,9 +1,13 @@
+import { useSortable } from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 import { Link } from "wouter";
 import { formatDue, inMyDay, isBefore } from "../../data/localDate.ts";
 import type { Task } from "../../data/model.ts";
 import { isMenuKey, menuPointFor } from "../../ui/ContextMenu.tsx";
 import { Icon } from "../../ui/Icon.tsx";
 import { useToday } from "../../ui/useToday.ts";
+import type { DragData } from "../dnd/DragAndDrop.tsx";
+import { MOVE_KEYS, moveKey } from "../dnd/reorder.ts";
 import { paths } from "../routes.ts";
 import { StarToggle } from "./StarToggle.tsx";
 import { TaskCheck } from "./TaskCheck.tsx";
@@ -24,6 +28,8 @@ interface TaskRowProps {
   onToggle: (task: Task) => void;
   onStar: (task: Task) => void;
   onMenu: (task: Task, at: { x: number; y: number }) => void;
+  /** Alt+Up and Alt+Down. Left out where the order isn't the user's own. */
+  onMove?: (task: Task, by: -1 | 1) => void;
 }
 
 export function TaskRow({
@@ -37,6 +43,7 @@ export function TaskRow({
   onToggle,
   onStar,
   onMenu,
+  onMove,
 }: TaskRowProps) {
   const done = task.completedAt !== null;
   const hasNote = task.note.trim() !== "";
@@ -44,12 +51,21 @@ export function TaskRow({
   const due = task.dueDate;
   const overdue = due !== null && !done && isBefore(due, now);
   const myDay = !hideMyDay && inMyDay(task, now);
+  const reorder = onMove !== undefined;
+  const data: DragData = { type: "task", task, reorder };
+  // Always draggable onto a list in the sidebar, but only a drop spot where reordering makes sense
+  const { setNodeRef, listeners, transform, transition, isDragging } =
+    useSortable({ id: task.id, data, disabled: { droppable: !reorder } });
 
   return (
     <li
+      ref={setNodeRef}
       className={styles.row}
+      style={{ transform: CSS.Translate.toString(transform), transition }}
       data-selected={selected || undefined}
       data-done={done || undefined}
+      data-dragging={isDragging || undefined}
+      {...listeners}
       onContextMenu={(e) => {
         e.preventDefault();
         onMenu(task, { x: e.clientX, y: e.clientY });
@@ -66,10 +82,17 @@ export function TaskRow({
           href={paths.task(listId, task.id)}
           className={styles.title}
           aria-current={selected ? "true" : undefined}
+          aria-keyshortcuts={reorder ? MOVE_KEYS : undefined}
+          draggable={false}
           onKeyDown={(e) => {
             if (isMenuKey(e)) {
               e.preventDefault();
               onMenu(task, menuPointFor(e.currentTarget));
+            }
+            const by = moveKey(e);
+            if (by && onMove) {
+              e.preventDefault();
+              onMove(task, by);
             }
           }}
         >

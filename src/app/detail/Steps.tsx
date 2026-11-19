@@ -1,3 +1,10 @@
+import { closestCenter, DndContext } from "@dnd-kit/core";
+import {
+  SortableContext,
+  useSortable,
+  verticalListSortingStrategy,
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 import { useRef, useState } from "react";
 import { useShallow } from "zustand/react/shallow";
 import type { Step } from "../../data/model.ts";
@@ -5,6 +12,8 @@ import { useActions, useAppState } from "../../state/AppContext.tsx";
 import { byPosition } from "../../state/position.ts";
 import { Icon } from "../../ui/Icon.tsx";
 import { IconButton } from "../../ui/IconButton.tsx";
+import { swallowNextClick, useDragSensors } from "../dnd/DragAndDrop.tsx";
+import { MOVE_KEYS, moveKey, nudge, placementAt } from "../dnd/reorder.ts";
 import { TaskCheck } from "../tasks/TaskCheck.tsx";
 import styles from "./Steps.module.css";
 
@@ -17,32 +26,43 @@ export function Steps({ taskId }: { taskId: string }) {
     ),
   );
   const actions = useActions();
+  const ids = steps.map((s) => s.id);
+  // The row is mostly a text field, a short hold tells dragging apart from selecting text
+  const sensors = useDragSensors({ delay: 250, tolerance: 5 });
 
-  // Alt+Up and Alt+Down shuffle a step, until drag and drop arrives
-  const move = (index: number, by: -1 | 1) => {
-    const step = steps[index];
-    const target = index + by;
-    if (!step || target < 0 || target >= steps.length) return;
-    const without = steps.filter((s) => s.id !== step.id);
-    actions.moveStep(step.id, {
-      prevId: without[target - 1]?.id ?? null,
-      nextId: without[target]?.id ?? null,
-    });
+  const move = (id: string, by: -1 | 1) => {
+    const at = nudge(ids, id, by);
+    if (at) actions.moveStep(id, at);
   };
 
   return (
     <div className={styles.steps}>
       {steps.length > 0 && (
-        <ul className={styles.list} aria-label="Steps">
-          {steps.map((step, i) => (
-            <StepRow
-              key={step.id}
-              step={step}
-              index={i}
-              onMove={(by) => move(i, by)}
-            />
-          ))}
-        </ul>
+        // Its own context, steps only ever move among each other
+        <DndContext
+          sensors={sensors}
+          collisionDetection={closestCenter}
+          onDragEnd={({ active, over }) => {
+            swallowNextClick();
+            const from = ids.indexOf(String(active.id));
+            const to = over ? ids.indexOf(String(over.id)) : -1;
+            if (from < 0 || to < 0 || from === to) return;
+            actions.moveStep(String(active.id), placementAt(ids, from, to));
+          }}
+        >
+          <SortableContext items={ids} strategy={verticalListSortingStrategy}>
+            <ul className={styles.list} aria-label="Steps">
+              {steps.map((step, i) => (
+                <StepRow
+                  key={step.id}
+                  step={step}
+                  index={i}
+                  onMove={(by) => move(step.id, by)}
+                />
+              ))}
+            </ul>
+          </SortableContext>
+        </DndContext>
       )}
       <AddStep
         taskId={taskId}
@@ -66,6 +86,8 @@ function StepRow({
   const [editing, setEditing] = useState(false);
   const cancelled = useRef(false);
   const shown = editing ? value : step.title;
+  const { setNodeRef, listeners, transform, transition, isDragging } =
+    useSortable({ id: step.id });
 
   const save = () => {
     setEditing(false);
@@ -81,8 +103,12 @@ function StepRow({
 
   return (
     <li
+      ref={setNodeRef}
       className={styles.row}
+      style={{ transform: CSS.Translate.toString(transform), transition }}
       data-done={step.completedAt !== null || undefined}
+      data-dragging={isDragging || undefined}
+      {...listeners}
     >
       <TaskCheck
         small
@@ -93,6 +119,7 @@ function StepRow({
       <input
         className={styles.title}
         aria-label={`Step ${index + 1}`}
+        aria-keyshortcuts={MOVE_KEYS}
         value={shown}
         maxLength={255}
         onFocus={() => {
@@ -109,9 +136,10 @@ function StepRow({
             cancelled.current = true;
             e.currentTarget.blur();
           }
-          if (e.altKey && (e.key === "ArrowUp" || e.key === "ArrowDown")) {
+          const by = moveKey(e);
+          if (by) {
             e.preventDefault();
-            onMove(e.key === "ArrowUp" ? -1 : 1);
+            onMove(by);
           }
         }}
       />
