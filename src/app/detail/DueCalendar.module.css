@@ -1,0 +1,95 @@
+.popover {
+  padding: var(--space-3);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-medium);
+}
+
+.popover[data-entering] {
+  animation: fade var(--duration-fast) var(--ease-enter);
+}
+
+.dialog {
+  outline: none;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--space-2);
+}
+
+.month {
+  margin: 0;
+  font: var(--font-body-strong);
+}
+
+.nav {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: none;
+  border-radius: var(--radius-md);
+  background: transparent;
+  color: var(--color-text);
+  cursor: pointer;
+}
+
+.nav[data-hovered] {
+  background: var(--color-surface-hover);
+}
+
+.nav[data-focus-visible] {
+  outline: 2px solid var(--color-focus);
+}
+
+.grid {
+  border-collapse: collapse;
+}
+
+.grid th {
+  width: 36px;
+  padding-bottom: var(--space-1);
+  color: var(--color-text-secondary);
+  font: var(--font-caption);
+}
+
+.cell {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  margin: 2px;
+  border-radius: var(--radius-round);
+  color: var(--color-text);
+  font: var(--font-body);
+  cursor: pointer;
+  outline: none;
+}
+
+.cell[data-outside-month] {
+  display: none;
+}
+
+.cell[data-hovered] {
+  background: var(--color-surface-hover);
+}
+
+.cell[data-selected] {
+  background: var(--accent);
+  color: var(--accent-on);
+}
+
+.cell[data-focus-visible] {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 1px;
+}
+
+@keyframes fade {
+  from {
+    opacity: 0;
+  }
+}

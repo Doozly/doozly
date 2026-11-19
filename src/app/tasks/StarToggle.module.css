@@ -1,0 +1,25 @@
+.star {
+  position: relative;
+  z-index: 1;
+  display: inline-grid;
+  flex: none;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: none;
+  border-radius: var(--radius-md);
+  background: transparent;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+}
+
+.star[data-hovered],
+.star[data-selected] {
+  color: var(--accent);
+}
+
+.star[data-focus-visible] {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 1px;
+}

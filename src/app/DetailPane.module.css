@@ -3,22 +3,86 @@
   flex-direction: column;
   width: 360px;
   flex: none;
-  overflow-y: auto;
   border-left: 1px solid var(--color-border);
   background: var(--color-bg);
 }
 
 .top {
   display: flex;
+  flex: none;
   justify-content: flex-end;
   padding: var(--space-2);
 }
 
+.scroll {
+  display: grid;
+  flex: 1;
+  align-content: start;
+  gap: var(--space-2);
+  min-height: 0;
+  padding: 0 var(--space-4) var(--space-4);
+  overflow-y: auto;
+}
+
+.card {
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-low);
+}
+
+.titleRow {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-4);
+}
+
+.titleRow > :first-child {
+  margin-top: 2px;
+}
+
 .title {
-  margin: 0;
-  padding: 0 var(--space-4);
+  flex: 1;
+  min-width: 0;
+  padding: var(--space-1) var(--space-1);
+  border: none;
+  border-radius: var(--radius-md);
+  background: transparent;
+  color: var(--color-text);
   font: var(--font-subtitle);
-  overflow-wrap: anywhere;
+  line-height: 24px;
+  resize: none;
+  overflow: hidden;
+  outline: none;
+}
+
+.title:hover {
+  background: var(--color-surface-hover);
+}
+
+.title:focus {
+  background: var(--color-surface);
+  box-shadow: inset 0 -2px 0 var(--accent);
+}
+
+.detail[data-done] .title {
+  color: var(--color-text-secondary);
+  text-decoration: line-through;
+}
+
+.footer {
+  display: flex;
+  flex: none;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 48px;
+  padding: 0 var(--space-2) 0 var(--space-4);
+  border-top: 1px solid var(--color-border);
+  color: var(--color-text-secondary);
+}
+
+.created {
+  font: var(--font-caption);
 }
 
 /* Medium screens: lies over the list instead of squeezing it */
@@ -42,4 +106,27 @@
     width: auto;
     border-left: none;
   }
+}
+
+.note {
+  display: block;
+  width: 100%;
+  min-height: 80px;
+  padding: var(--space-3) var(--space-4);
+  border: none;
+  border-radius: var(--radius-md);
+  background: transparent;
+  color: var(--color-text);
+  font: var(--font-body);
+  resize: none;
+  overflow: hidden;
+  outline: none;
+}
+
+.note::placeholder {
+  color: var(--color-text-secondary);
+}
+
+.note:focus {
+  box-shadow: inset 0 -2px 0 var(--accent);
 }

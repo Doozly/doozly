@@ -6,6 +6,7 @@ import bell from "@phosphor-icons/core/regular/bell.svg?raw";
 import calendarBlank from "@phosphor-icons/core/regular/calendar-blank.svg?raw";
 import calendarDots from "@phosphor-icons/core/regular/calendar-dots.svg?raw";
 import caretDown from "@phosphor-icons/core/regular/caret-down.svg?raw";
+import caretLeft from "@phosphor-icons/core/regular/caret-left.svg?raw";
 import caretRight from "@phosphor-icons/core/regular/caret-right.svg?raw";
 import check from "@phosphor-icons/core/regular/check.svg?raw";
 import checkCircle from "@phosphor-icons/core/regular/check-circle.svg?raw";
@@ -68,6 +69,7 @@ const regular = {
   groupBy: squaresFour,
   theme: palette,
   more: dotsThree,
+  chevronLeft: caretLeft,
   chevronRight: caretRight,
   chevronDown: caretDown,
   back: arrowLeft,

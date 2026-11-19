@@ -209,3 +209,16 @@ test("duplicating leaves deleted tasks behind", async () => {
     Object.values(state().tasks).filter((t) => t.listId === copy?.id),
   ).toEqual([]);
 });
+
+test("My Day holds a task only on the day it was added", async () => {
+  const { actions, state } = await testApp();
+  const t = actions.addTask(INBOX_ID, "Call mum");
+  if (!t) throw new Error("no task");
+  actions.toggleMyDay(t.id, "2026-11-19");
+  expect(state().tasks[t.id]?.myDay).toBe("2026-11-19");
+  // Next day it reads as not in My Day, so toggling adds it again for that day
+  actions.toggleMyDay(t.id, "2026-11-20");
+  expect(state().tasks[t.id]?.myDay).toBe("2026-11-20");
+  actions.toggleMyDay(t.id, "2026-11-20");
+  expect(state().tasks[t.id]?.myDay).toBeNull();
+});

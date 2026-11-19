@@ -4,7 +4,7 @@
   align-items: center;
   gap: var(--space-3);
   min-height: 52px;
-  padding: 0 var(--space-4);
+  padding: 0 var(--space-2) 0 var(--space-4);
   border-radius: var(--radius-md);
   background: var(--color-surface);
   box-shadow: var(--shadow-low);
@@ -18,66 +18,14 @@
   background: var(--accent-subtle);
 }
 
-.check {
-  position: relative;
-  z-index: 1;
-  display: grid;
-  place-items: center;
-  width: 32px;
-  height: 32px;
-  margin-left: calc(-1 * var(--space-2));
-  cursor: pointer;
-}
-
-.circle {
-  display: grid;
-  place-items: center;
-  width: 18px;
-  height: 18px;
-  border: 1.5px solid var(--color-text-secondary);
-  border-radius: var(--radius-round);
-  color: var(--accent);
-  transition:
-    background-color var(--duration-fast) var(--ease-standard),
-    border-color var(--duration-fast) var(--ease-standard);
-}
-
-.tick {
-  opacity: 0;
-  transition: opacity var(--duration-fast) var(--ease-standard);
-}
-
-.check[data-hovered] .circle {
-  border-color: var(--accent);
-}
-
-.check[data-hovered] .tick {
-  opacity: 1;
-}
-
-.check[data-selected] .circle {
-  border-color: var(--accent);
-  background: var(--accent);
-  color: var(--accent-on);
-}
-
-.check[data-selected] .tick {
-  opacity: 1;
-}
-
-.check[data-pop] .circle {
-  animation: pop var(--duration-slow) var(--ease-bounce);
-}
-
-.check[data-focus-visible] .circle {
-  outline: 2px solid var(--color-focus);
-  outline-offset: 3px;
-}
-
-.title {
+.body {
   flex: 1;
   min-width: 0;
   padding: var(--space-3) 0;
+}
+
+.title {
+  display: block;
   color: var(--color-text);
   font: var(--font-body);
   text-decoration: none;
@@ -106,11 +54,36 @@
   text-decoration: line-through;
 }
 
-@keyframes pop {
-  0% {
-    transform: scale(0.6);
-  }
-  100% {
-    transform: scale(1);
-  }
+.meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-1) var(--space-2);
+  color: var(--color-text-secondary);
+  font: var(--font-caption);
+}
+
+/* A dot between meta items, like "1 of 3 · note" */
+.meta > * + *::before {
+  content: "·";
+  margin-right: var(--space-2);
+}
+
+.metaIcon {
+  display: inline-flex;
+  align-items: center;
+}
+
+.due {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+.due[data-today] {
+  color: var(--accent);
+}
+
+.due[data-overdue] {
+  color: var(--color-danger);
 }

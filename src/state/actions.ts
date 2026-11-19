@@ -1,4 +1,5 @@
 import { stamp } from "../data/clock.ts";
+import { today } from "../data/localDate.ts";
 import {
   createList,
   createStep,
@@ -8,6 +9,7 @@ import {
   INBOX_ID,
   type List,
   type ListGroup,
+  type LocalDate,
   type Settings,
   type Step,
   type Task,
@@ -132,6 +134,14 @@ export function createActions({ store, commit }: App) {
       const task = liveTask(id);
       if (!task) return null;
       return commit({ tasks: [touch(task, { important: !task.important })] });
+    },
+
+    /** In My Day means added today. Tomorrow it drops out by itself. */
+    toggleMyDay(id: string, now: LocalDate = today()): Undo | null {
+      const task = liveTask(id);
+      if (!task) return null;
+      const myDay = task.myDay === now ? null : now;
+      return commit({ tasks: [touch(task, { myDay })] });
     },
 
     deleteTask(id: string): Undo | null {

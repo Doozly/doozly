@@ -23,6 +23,7 @@
     "pre-commit": "sh scripts/pre-commit.sh"
   },
   "dependencies": {
+    "@internationalized/date": "3.12.4",
     "@phosphor-icons/core": "^2.1.1",
     "fractional-indexing": "^4.0.0",
     "idb": "^8.0.4",

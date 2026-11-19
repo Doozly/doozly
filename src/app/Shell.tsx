@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { lazy, Suspense, useState } from "react";
 import { Dialog, Modal, ModalOverlay } from "react-aria-components";
 import { Redirect, useLocation } from "wouter";
 import { INBOX_ID } from "../data/model.ts";
@@ -9,10 +9,14 @@ import { NARROW, useMediaQuery } from "../ui/useMediaQuery.ts";
 import { DetailPane } from "./DetailPane.tsx";
 import { ListPane } from "./ListPane.tsx";
 import { paths, useSelection } from "./routes.ts";
-import { SettingsPanel } from "./SettingsPanel.tsx";
 import styles from "./Shell.module.css";
 import { Sidebar } from "./Sidebar.tsx";
 import { useUi } from "./uiStore.ts";
+
+// Only needed once someone opens Settings, also it loads then
+const SettingsPanel = lazy(() =>
+  import("./SettingsPanel.tsx").then((m) => ({ default: m.SettingsPanel })),
+);
 
 export function Shell() {
   const { listId, taskId } = useSelection();
@@ -23,6 +27,8 @@ export function Shell() {
   const list = useAppState((s) => (listId ? s.lists[listId] : undefined));
   const task = useAppState((s) => (taskId ? s.tasks[taskId] : undefined));
   const [settingsOpen, setSettingsOpen] = useState(false);
+  // Stays mounted after the first open, so closing still animates
+  const [settingsUsed, setSettingsUsed] = useState(false);
 
   // Unknown or deleted list, like an old link: go home
   if (!list || list.deletedAt !== null) {
@@ -43,10 +49,17 @@ export function Shell() {
           label="Settings"
           tone="onHeader"
           className={styles.headerEnd}
-          onPress={() => setSettingsOpen(true)}
+          onPress={() => {
+            setSettingsUsed(true);
+            setSettingsOpen(true);
+          }}
         />
       </header>
-      <SettingsPanel isOpen={settingsOpen} onOpenChange={setSettingsOpen} />
+      {settingsUsed && (
+        <Suspense fallback={null}>
+          <SettingsPanel isOpen={settingsOpen} onOpenChange={setSettingsOpen} />
+        </Suspense>
+      )}
       <div className={styles.body}>
         {!sidebarHidden && (
           <div className={styles.sidebar}>
@@ -80,6 +93,7 @@ export function Shell() {
         </main>
         {task && (
           <DetailPane
+            key={task.id}
             task={task}
             onClose={() => navigate(paths.list(list.id))}
           />
