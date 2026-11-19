@@ -1,5 +1,6 @@
 import { generateNKeysBetween } from "fractional-indexing";
-import { stamp } from "../data/clock.ts";
+import { clock, stamp } from "../data/clock.ts";
+import type { Snapshot } from "../data/db.ts";
 import { today } from "../data/localDate.ts";
 import {
   createGroup,
@@ -16,6 +17,7 @@ import {
   type Step,
   type Task,
 } from "../data/model.ts";
+import { changes, latestStamp, mergeSnapshots } from "../sync/merge.ts";
 import { uniqueTitle } from "./naming.ts";
 import { byPosition, positionBetween } from "./position.ts";
 import type { App, AppState, Undo } from "./store.ts";
@@ -350,6 +352,31 @@ export function createActions({ store, commit }: App) {
       return commit({
         settings: [{ key, value, updatedAt: stamp() } as never],
       });
+    },
+
+    /** Takes in an export like a sync would: per record the newer one wins. null when nothing in it is new. */
+    importSnapshot(
+      snapshot: Snapshot,
+    ): { undo: Undo; lists: number; tasks: number } | null {
+      const latest = latestStamp(snapshot);
+      if (latest) clock.receive(latest, Date.now());
+      const s = get();
+      const local: Snapshot = {
+        lists: Object.values(s.lists),
+        groups: Object.values(s.groups),
+        tasks: Object.values(s.tasks),
+        steps: Object.values(s.steps),
+        settings: Object.values(s.settings),
+      };
+      const batch = changes(local, mergeSnapshots(local, snapshot));
+      if (!Object.values(batch).some((rows) => rows?.length)) return null;
+      const alive = (rows: Entity[] = []) =>
+        rows.filter((r) => r.deletedAt === null).length;
+      return {
+        undo: commit(batch),
+        lists: alive(batch.lists),
+        tasks: alive(batch.tasks),
+      };
     },
   };
 }

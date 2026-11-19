@@ -1,4 +1,5 @@
 // @vitest-environment node
+import { IDBFactory } from "fake-indexeddb";
 import { expect, test } from "vitest";
 import { loadAll } from "../data/db.ts";
 import { INBOX_ID } from "../data/model.ts";
@@ -317,4 +318,43 @@ test("only an empty group can be deleted, and groups rename", async () => {
   actions.moveListToGroup(list.id, null);
   expect(actions.deleteGroup(home.id)).not.toBeNull();
   expect(state().groups[home.id]?.deletedAt).not.toBeNull();
+});
+
+test("an import merges like a sync: new things land, newer edits win, nothing doubles", async () => {
+  const source = await testApp();
+  const list = source.actions.addList("Groceries");
+  const milk = source.actions.addTask(list.id, "Milk");
+  source.actions.addTask(list.id, "Bread");
+  await source.app.flush();
+  const backup = await loadAll(source.db);
+  if (!milk) throw new Error("no task");
+
+  // Another device: a database of its own
+  globalThis.indexedDB = new IDBFactory();
+  const { actions, state } = await testApp();
+  expect(actions.importSnapshot(backup)).toMatchObject({ lists: 1, tasks: 2 });
+  expect(titlesIn(state(), list.id).sort()).toEqual(["Bread", "Milk"]);
+  expect(state().lists[INBOX_ID]).toBeDefined();
+
+  // The same file again changes nothing
+  expect(actions.importSnapshot(backup)).toBeNull();
+
+  // An edit made here after the export stays
+  actions.updateTask(milk.id, { title: "Oat milk" });
+  expect(actions.importSnapshot(backup)).toBeNull();
+  expect(state().tasks[milk.id]?.title).toBe("Oat milk");
+});
+
+test("undo takes an import back out", async () => {
+  const source = await testApp();
+  const list = source.actions.addList("Groceries");
+  source.actions.addTask(list.id, "Milk");
+  await source.app.flush();
+  const backup = await loadAll(source.db);
+
+  globalThis.indexedDB = new IDBFactory();
+  const { actions, state } = await testApp();
+  actions.importSnapshot(backup)?.undo();
+  expect(state().lists[list.id]?.deletedAt).not.toBeNull();
+  expect(titlesIn(state(), list.id)).toEqual([]);
 });

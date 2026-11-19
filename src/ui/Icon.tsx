@@ -3,6 +3,7 @@ import starFill from "@phosphor-icons/core/fill/star-fill.svg?raw";
 import arrowDown from "@phosphor-icons/core/regular/arrow-down.svg?raw";
 import arrowLeft from "@phosphor-icons/core/regular/arrow-left.svg?raw";
 import arrowUp from "@phosphor-icons/core/regular/arrow-up.svg?raw";
+import arrowsClockwise from "@phosphor-icons/core/regular/arrows-clockwise.svg?raw";
 import arrowsDownUp from "@phosphor-icons/core/regular/arrows-down-up.svg?raw";
 import bell from "@phosphor-icons/core/regular/bell.svg?raw";
 import calendarBlank from "@phosphor-icons/core/regular/calendar-blank.svg?raw";
@@ -18,6 +19,7 @@ import cloudCheck from "@phosphor-icons/core/regular/cloud-check.svg?raw";
 import cloudSlash from "@phosphor-icons/core/regular/cloud-slash.svg?raw";
 import copy from "@phosphor-icons/core/regular/copy.svg?raw";
 import dotsThree from "@phosphor-icons/core/regular/dots-three.svg?raw";
+import downloadSimple from "@phosphor-icons/core/regular/download-simple.svg?raw";
 import folderSimple from "@phosphor-icons/core/regular/folder-simple.svg?raw";
 import folderSimplePlus from "@phosphor-icons/core/regular/folder-simple-plus.svg?raw";
 import gear from "@phosphor-icons/core/regular/gear.svg?raw";
@@ -42,6 +44,7 @@ import star from "@phosphor-icons/core/regular/star.svg?raw";
 import sun from "@phosphor-icons/core/regular/sun.svg?raw";
 import textAa from "@phosphor-icons/core/regular/text-aa.svg?raw";
 import trash from "@phosphor-icons/core/regular/trash.svg?raw";
+import uploadSimple from "@phosphor-icons/core/regular/upload-simple.svg?raw";
 import userCircle from "@phosphor-icons/core/regular/user-circle.svg?raw";
 import warning from "@phosphor-icons/core/regular/warning.svg?raw";
 import x from "@phosphor-icons/core/regular/x.svg?raw";
@@ -93,6 +96,9 @@ const regular = {
   signOut,
   synced: cloudCheck,
   offline: cloudSlash,
+  sync: arrowsClockwise,
+  export: downloadSimple,
+  import: uploadSimple,
   warning,
 };
 

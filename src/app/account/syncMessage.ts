@@ -1,0 +1,83 @@
+import type { ProviderKind, SessionState } from "../../sync/session.ts";
+import type { IconName } from "../../ui/Icon.tsx";
+
+export const providerNames: Record<ProviderKind, string> = {
+  google: "Google",
+  microsoft: "Microsoft",
+};
+
+export const storageNames: Record<ProviderKind, string> = {
+  google: "Google Drive",
+  microsoft: "OneDrive",
+};
+
+export interface SyncMessage {
+  icon: IconName;
+  text: string;
+  /** Something's wrong that the user should see on the account button too */
+  attention: boolean;
+  action?: "signIn" | "reload";
+}
+
+const waiting = (n: number) =>
+  n === 1 ? "1 change waiting to sync." : `${n} changes waiting to sync.`;
+
+/** What to tell the user about sync, null when signed out */
+export function syncMessage(s: SessionState): SyncMessage | null {
+  if (!s.account) return null;
+  const where = storageNames[s.account.provider];
+  if (s.elsewhere) {
+    return {
+      icon: "synced",
+      text: "Syncing in another Doozly tab.",
+      attention: false,
+    };
+  }
+  const sync = s.sync;
+  switch (sync?.phase) {
+    case undefined:
+    case "off":
+    case "syncing":
+      return { icon: "sync", text: "Syncing…", attention: false };
+    case "idle":
+      return {
+        icon: "synced",
+        text: sync.pending
+          ? waiting(sync.pending)
+          : `Up to date with ${where}.`,
+        attention: false,
+      };
+    case "offline":
+      return {
+        icon: "offline",
+        text: `Can't reach ${where} right now. Your changes are saved on this device and sync when it's back.${sync.pending ? ` ${waiting(sync.pending)}` : ""}`,
+        attention: false,
+      };
+    case "signedOut":
+      return {
+        icon: "warning",
+        text: "Sign in again to keep syncing.",
+        attention: true,
+        action: "signIn",
+      };
+    case "newerApp":
+      return {
+        icon: "warning",
+        text: "A newer version of Doozly changed your data. Reload to update and keep syncing.",
+        attention: true,
+        action: "reload",
+      };
+    case "noStorage":
+      return {
+        icon: "warning",
+        text: `This account has no ${where}, so Doozly can't sync with it. Your tasks on this device are safe.`,
+        attention: true,
+      };
+    case "error":
+      return {
+        icon: "warning",
+        text: `Sync stopped because a file in your ${where} couldn't be read. Your tasks on this device are safe.`,
+        attention: true,
+      };
+  }
+}

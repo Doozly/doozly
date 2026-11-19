@@ -19,6 +19,9 @@
 }
 
 .headerEnd {
+  display: flex;
+  gap: var(--space-1);
+  align-items: center;
   justify-self: end;
 }
 

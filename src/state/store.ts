@@ -40,6 +40,8 @@ export interface App {
   load(): Promise<void>;
   /** The one way to change data: memory now, disk right after, other tabs once saved */
   commit(batch: Batch): Undo;
+  /** Records from sync. Only the ones newer than ours land, and there's no undo. */
+  applyRemote(batch: Batch): void;
   /** Resolves when every write so far is on disk (or rolled back) */
   flush(): Promise<void>;
   dispose(): void;
@@ -69,6 +71,20 @@ function keysOf(batch: Batch): Keys {
     if (rows?.length) keys[t] = rows.map(keyOf);
   }
   return keys;
+}
+
+/** Only the records newer than what we hold, ours may still be on the way to disk */
+function newerThanOurs(state: Tables, batch: Batch): Batch {
+  const newer: Batch = {};
+  for (const t of tableNames) {
+    const current = state[t] as Rows;
+    const rows = (batch[t] ?? []).filter((r: AnyRecord) => {
+      const mine = current[keyOf(r)];
+      return !mine || r.updatedAt > mine.updatedAt;
+    });
+    if (rows.length) (newer as Record<Table, AnyRecord[]>)[t] = rows;
+  }
+  return newer;
 }
 
 const empty: Tables = {
@@ -108,18 +124,8 @@ export function createApp(
 
   async function refresh(keys: Keys) {
     const fresh = await loadRecords(db, keys);
-    // Keep ours if it's newer, it may still be on the way to disk
     const state = store.getState();
-    const newer: Batch = {};
-    for (const t of tableNames) {
-      const current = state[t] as Rows;
-      const rows = (fresh[t] ?? []).filter((r: AnyRecord) => {
-        const mine = current[keyOf(r)];
-        return !mine || r.updatedAt > mine.updatedAt;
-      });
-      if (rows.length) (newer as Record<Table, AnyRecord[]>)[t] = rows;
-    }
-    store.setState(withRecords(state, newer));
+    store.setState(withRecords(state, newerThanOurs(state, fresh)));
   }
 
   async function load() {
@@ -164,6 +170,21 @@ export function createApp(
     return () => undo(before);
   }
 
+  function applyRemote(batch: Batch) {
+    const state = store.getState();
+    // A local change can land while sync was busy reading, that one stays
+    const newer = newerThanOurs(state, batch);
+    if (Object.keys(newer).length === 0) return;
+    store.setState(withRecords(state, newer));
+    track(
+      writeBatch(db, newer).then(
+        () => channel?.postMessage(keysOf(newer)),
+        // The next full sync brings them again, nothing to roll back
+        (err) => store.setState({ saveError: String(err) }),
+      ),
+    );
+  }
+
   function rollback(before: Before[]) {
     const state = store.getState();
     const next: Partial<Record<Table, Rows>> = {};
@@ -199,6 +220,7 @@ export function createApp(
     store,
     load,
     commit,
+    applyRemote,
     async flush() {
       while (pending.size) await Promise.all([...pending]);
     },

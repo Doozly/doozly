@@ -80,6 +80,16 @@
   );
 }
 
+.accent {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: var(--accent-on);
+}
+
+.accent[data-hovered] {
+  background: var(--accent-hover);
+}
+
 @keyframes fade {
   from {
     opacity: 0;

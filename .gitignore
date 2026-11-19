@@ -11,3 +11,8 @@ playwright/.cache/
 
 .DS_Store
 .idea/
+
+# Relay: local settings, its database and the built binary
+relay/relay.env
+relay/*.db*
+relay/relay

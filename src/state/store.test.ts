@@ -93,3 +93,27 @@ test("another tab's older copy doesn't replace our newer one", async () => {
   await two.app.flush();
   expect(two.state().tasks[t.id]?.title).toBe("Mine");
 });
+
+test("applyRemote takes only what's newer than ours, and saves it", async () => {
+  const { app, db, state } = await testApp();
+  const ours = createTask({ listId: INBOX_ID, title: "Ours", position: "a0" });
+  app.commit({ tasks: [ours] });
+
+  const older = {
+    ...ours,
+    title: "Old remote",
+    updatedAt: "0000000000001:0000:zz",
+  };
+  const fresh = createTask({
+    listId: INBOX_ID,
+    title: "Theirs",
+    position: "a1",
+  });
+  app.applyRemote({ tasks: [older, fresh] });
+  await app.flush();
+
+  expect(state().tasks[ours.id]?.title).toBe("Ours");
+  expect(state().tasks[fresh.id]?.title).toBe("Theirs");
+  const onDisk = (await loadAll(db)).tasks.map((t) => t.title).sort();
+  expect(onDisk).toEqual(["Ours", "Theirs"]);
+});

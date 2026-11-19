@@ -34,3 +34,8 @@ export function useAppState<T>(selector: (state: AppState) => T): T {
 export function useActions(): Actions {
   return useAppContext().actions;
 }
+
+/** The app itself, for reading everything at once, like an export. Changes still go through actions. */
+export function useApp(): App {
+  return useAppContext().app;
+}

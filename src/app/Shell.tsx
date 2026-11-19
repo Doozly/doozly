@@ -7,6 +7,7 @@ import { IconButton } from "../ui/IconButton.tsx";
 import { Logo } from "../ui/Logo.tsx";
 import { NARROW, useMediaQuery } from "../ui/useMediaQuery.ts";
 import { useToday } from "../ui/useToday.ts";
+import { AccountButton } from "./account/AccountButton.tsx";
 import { DetailPane } from "./DetailPane.tsx";
 import { DragAndDrop } from "./dnd/DragAndDrop.tsx";
 import { ListPane } from "./ListPane.tsx";
@@ -78,16 +79,18 @@ export function Shell() {
         <div className={styles.headerSearch}>
           <SearchBox />
         </div>
-        <IconButton
-          icon="settings"
-          label="Settings"
-          tone="onHeader"
-          className={styles.headerEnd}
-          onPress={() => {
-            setSettingsUsed(true);
-            setSettingsOpen(true);
-          }}
-        />
+        <div className={styles.headerEnd}>
+          <IconButton
+            icon="settings"
+            label="Settings"
+            tone="onHeader"
+            onPress={() => {
+              setSettingsUsed(true);
+              setSettingsOpen(true);
+            }}
+          />
+          <AccountButton />
+        </div>
       </header>
       {settingsUsed && (
         <Suspense fallback={null}>

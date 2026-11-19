@@ -12,6 +12,8 @@ interface ConfirmDialogProps {
   title: string;
   message: string;
   confirmLabel: string;
+  /** Red for deleting, the accent colour for anything else */
+  tone?: "danger" | "accent";
   onConfirm: () => void;
   onCancel: () => void;
 }
@@ -21,6 +23,7 @@ export function ConfirmDialog({
   title,
   message,
   confirmLabel,
+  tone = "danger",
   onConfirm,
   onCancel,
 }: ConfirmDialogProps) {
@@ -44,7 +47,7 @@ export function ConfirmDialog({
               Cancel
             </Button>
             <Button
-              className={`${styles.button} ${styles.danger}`}
+              className={`${styles.button} ${styles[tone]}`}
               onPress={onConfirm}
               autoFocus
             >
