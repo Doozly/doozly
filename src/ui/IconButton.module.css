@@ -1,0 +1,39 @@
+.button {
+  display: inline-grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: none;
+  border-radius: var(--radius-md);
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  transition: background-color var(--duration-fast) var(--ease-standard);
+}
+
+.button[data-hovered] {
+  background: var(--color-surface-hover);
+}
+
+.button[data-pressed] {
+  background: var(--color-surface-pressed);
+}
+
+.button[data-focus-visible] {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 1px;
+}
+
+.onHeader {
+  color: var(--color-on-header);
+}
+
+.onHeader[data-hovered],
+.onHeader[data-pressed] {
+  background: var(--color-on-header-hover);
+}
+
+.onHeader[data-focus-visible] {
+  outline-color: var(--color-on-header);
+}

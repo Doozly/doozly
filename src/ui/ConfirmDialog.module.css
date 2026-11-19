@@ -1,0 +1,94 @@
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 30;
+  display: grid;
+  place-items: center;
+  padding: var(--space-4);
+  background: var(--color-scrim);
+}
+
+.overlay[data-entering] {
+  animation: fade var(--duration-normal) var(--ease-enter);
+}
+
+.modal {
+  width: min(400px, 100%);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-high);
+}
+
+.modal[data-entering] {
+  animation: pop var(--duration-normal) var(--ease-enter);
+}
+
+.dialog {
+  padding: var(--space-6);
+  outline: none;
+}
+
+.title {
+  margin: 0 0 var(--space-2);
+  font: var(--font-subtitle);
+  overflow-wrap: anywhere;
+}
+
+.message {
+  margin: 0 0 var(--space-6);
+  color: var(--color-text-secondary);
+}
+
+.buttons {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-2);
+}
+
+.button {
+  min-width: 96px;
+  height: 32px;
+  padding: 0 var(--space-4);
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  color: var(--color-text);
+  font: var(--font-body-strong);
+  cursor: pointer;
+}
+
+.button[data-hovered] {
+  background: var(--color-surface-hover);
+}
+
+.button[data-focus-visible] {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
+.danger {
+  border-color: var(--color-danger);
+  background: var(--color-danger);
+  color: light-dark(#ffffff, #141416);
+}
+
+.danger[data-hovered] {
+  background: color-mix(
+    in oklab,
+    var(--color-danger),
+    light-dark(black, white) 12%
+  );
+}
+
+@keyframes fade {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes pop {
+  from {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+}

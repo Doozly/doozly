@@ -1,0 +1,53 @@
+.anchor {
+  position: fixed;
+  width: 0;
+  height: 0;
+  pointer-events: none;
+}
+
+.popover {
+  min-width: 220px;
+  padding: var(--space-1) 0;
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-medium);
+}
+
+.popover[data-entering] {
+  animation: fade var(--duration-fast) var(--ease-enter);
+}
+
+.menu {
+  outline: none;
+}
+
+.item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  min-height: 36px;
+  padding: 0 var(--space-4);
+  color: var(--color-text);
+  font: var(--font-body);
+  cursor: pointer;
+  outline: none;
+}
+
+.item[data-focused] {
+  background: var(--color-surface-hover);
+}
+
+.danger {
+  color: var(--color-danger);
+}
+
+.separator {
+  margin: var(--space-1) 0;
+  border-top: 1px solid var(--color-border);
+}
+
+@keyframes fade {
+  from {
+    opacity: 0;
+  }
+}

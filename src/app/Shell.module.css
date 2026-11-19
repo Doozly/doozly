@@ -1,0 +1,85 @@
+.shell {
+  display: grid;
+  grid-template-rows: 48px minmax(0, 1fr);
+  height: 100dvh;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  padding: 0 var(--space-4);
+  background: var(--color-header);
+  color: var(--color-on-header);
+}
+
+.headerEnd {
+  margin-left: auto;
+}
+
+.body {
+  position: relative;
+  display: flex;
+  min-height: 0;
+}
+
+.sidebar {
+  width: 290px;
+  flex: none;
+  border-right: 1px solid var(--color-border);
+}
+
+.main {
+  flex: 1;
+  min-width: 0;
+  overflow-y: auto;
+  background: var(--color-bg);
+}
+
+.scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 10;
+  background: var(--color-scrim);
+}
+
+.scrim[data-entering] {
+  animation: fade var(--duration-normal) var(--ease-enter);
+}
+
+.scrim[data-exiting] {
+  animation: fade var(--duration-fast) var(--ease-exit) reverse;
+}
+
+.drawer {
+  position: fixed;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: min(290px, 85vw);
+  box-shadow: var(--shadow-high);
+}
+
+.drawer[data-entering] {
+  animation: slide-in var(--duration-normal) var(--ease-enter);
+}
+
+.drawer[data-exiting] {
+  animation: slide-in var(--duration-fast) var(--ease-exit) reverse;
+}
+
+.drawerDialog {
+  height: 100%;
+  outline: none;
+}
+
+@keyframes fade {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes slide-in {
+  from {
+    transform: translateX(-100%);
+  }
+}

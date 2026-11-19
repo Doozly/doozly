@@ -1,0 +1,116 @@
+.row {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  min-height: 52px;
+  padding: 0 var(--space-4);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-low);
+}
+
+.row:hover {
+  background: var(--color-surface-hover);
+}
+
+.row[data-selected] {
+  background: var(--accent-subtle);
+}
+
+.check {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  margin-left: calc(-1 * var(--space-2));
+  cursor: pointer;
+}
+
+.circle {
+  display: grid;
+  place-items: center;
+  width: 18px;
+  height: 18px;
+  border: 1.5px solid var(--color-text-secondary);
+  border-radius: var(--radius-round);
+  color: var(--accent);
+  transition:
+    background-color var(--duration-fast) var(--ease-standard),
+    border-color var(--duration-fast) var(--ease-standard);
+}
+
+.tick {
+  opacity: 0;
+  transition: opacity var(--duration-fast) var(--ease-standard);
+}
+
+.check[data-hovered] .circle {
+  border-color: var(--accent);
+}
+
+.check[data-hovered] .tick {
+  opacity: 1;
+}
+
+.check[data-selected] .circle {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: var(--accent-on);
+}
+
+.check[data-selected] .tick {
+  opacity: 1;
+}
+
+.check[data-pop] .circle {
+  animation: pop var(--duration-slow) var(--ease-bounce);
+}
+
+.check[data-focus-visible] .circle {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 3px;
+}
+
+.title {
+  flex: 1;
+  min-width: 0;
+  padding: var(--space-3) 0;
+  color: var(--color-text);
+  font: var(--font-body);
+  text-decoration: none;
+  overflow-wrap: anywhere;
+}
+
+/* The whole row opens the task, only the checkbox sits above */
+.title::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+}
+
+.title:focus-visible {
+  outline: none;
+}
+
+.title:focus-visible::after {
+  outline: 2px solid var(--color-focus);
+  outline-offset: -2px;
+}
+
+.row[data-done] .title {
+  color: var(--color-text-secondary);
+  text-decoration: line-through;
+}
+
+@keyframes pop {
+  0% {
+    transform: scale(0.6);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
