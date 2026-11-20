@@ -2,7 +2,7 @@ import {
   SortableContext,
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
-import { useState } from "react";
+import { startTransition, useEffect, useState } from "react";
 import { Button } from "react-aria-components";
 import { useShallow } from "zustand/react/shallow";
 import { addDays, inMyDay, today } from "../../data/localDate.ts";
@@ -11,6 +11,7 @@ import { useActions, useAppState } from "../../state/AppContext.tsx";
 import { setting } from "../../state/actions.ts";
 import { ContextMenu, type MenuEntry } from "../../ui/ContextMenu.tsx";
 import { Icon } from "../../ui/Icon.tsx";
+import { animateRows } from "../../ui/motion.ts";
 import { useToday } from "../../ui/useToday.ts";
 import { nudge } from "../dnd/reorder.ts";
 import { useSelection } from "../routes.ts";
@@ -23,15 +24,36 @@ import {
   orderings,
   sortTasks,
   starredOnTop,
+  type TaskGroup,
 } from "./arrange.ts";
 import styles from "./TaskList.module.css";
 import { TaskRow } from "./TaskRow.tsx";
 import { useDeleteTask } from "./useDeleteTask.tsx";
 import { useToggleCompleted } from "./useToggleCompleted.ts";
 
+// Enough to fill the screen. A huge view like All paints these first, the rest follows.
+const FIRST_ROWS = 100;
+
+function useRowLimit() {
+  const [all, setAll] = useState(false);
+  useEffect(() => startTransition(() => setAll(true)), []);
+  return all ? Number.POSITIVE_INFINITY : FIRST_ROWS;
+}
+
+/** The groups cut to the first `limit` tasks, in screen order */
+function clip(groups: TaskGroup[], limit: number): TaskGroup[] {
+  let left = limit;
+  return groups.flatMap((g) => {
+    const tasks = g.tasks.slice(0, Math.max(0, left));
+    left -= g.tasks.length;
+    return tasks.length ? [{ ...g, tasks }] : [];
+  });
+}
+
 export function TaskList({ view }: { view: View }) {
   const { taskId } = useSelection();
   const now = useToday();
+  const limit = useRowLimit();
   const visible = (t: Task) => t.deletedAt === null && view.includes(t);
   const open = useAppState(
     useShallow((s) =>
@@ -98,7 +120,7 @@ export function TaskList({ view }: { view: View }) {
       pop={task.id === pop}
       steps={progress[task.id]}
       onToggle={toggle}
-      onStar={(t) => toggleImportant(t.id)}
+      onStar={(t) => animateRows(() => toggleImportant(t.id))}
       onMenu={(t, at) => setMenu({ task: t, ...at })}
       onMove={reorderable && task.completedAt === null ? move : undefined}
     />
@@ -116,6 +138,8 @@ export function TaskList({ view }: { view: View }) {
             sort?.by === group ? sort.direction : defaultDirection[group],
             now,
           );
+  const shownOpen = ordered.slice(0, limit);
+  const shownDone = done.slice(0, Math.max(0, limit - ordered.length));
   const empty = open.length === 0 && (done.length === 0 || !view.showCompleted);
 
   return (
@@ -125,9 +149,11 @@ export function TaskList({ view }: { view: View }) {
       {empty ? (
         <p className={styles.empty}>{view.emptyText}</p>
       ) : groups ? (
-        groups.map(({ key, title, tasks }) => (
+        clip(groups, limit).map(({ key, title, tasks }) => (
           <section key={key} className={styles.group}>
-            <h2 className={styles.groupTitle}>{title}</h2>
+            <h2 className={styles.groupTitle} data-flip={`group-${key}`}>
+              {title}
+            </h2>
             <SortableContext id={key} items={tasks.map((t) => t.id)}>
               <ul className={styles.tasks} aria-label={title}>
                 {tasks.map(row)}
@@ -138,11 +164,11 @@ export function TaskList({ view }: { view: View }) {
       ) : (
         <SortableContext
           id="open"
-          items={orderedIds}
+          items={shownOpen.map((t) => t.id)}
           strategy={verticalListSortingStrategy}
         >
           <ul className={styles.tasks} aria-label="Tasks">
-            {ordered.map(row)}
+            {shownOpen.map(row)}
           </ul>
         </SortableContext>
       )}
@@ -151,6 +177,7 @@ export function TaskList({ view }: { view: View }) {
         <section className={styles.completed}>
           <Button
             className={styles.completedToggle}
+            data-flip="completed"
             aria-expanded={!folded}
             onPress={() => toggleFolded(view.id)}
           >
@@ -159,9 +186,9 @@ export function TaskList({ view }: { view: View }) {
             <span className={styles.completedCount}>{done.length}</span>
           </Button>
           {!folded && (
-            <SortableContext id="done" items={done.map((t) => t.id)}>
+            <SortableContext id="done" items={shownDone.map((t) => t.id)}>
               <ul className={styles.tasks} aria-label="Completed tasks">
-                {done.map(row)}
+                {shownDone.map(row)}
               </ul>
             </SortableContext>
           )}
@@ -177,10 +204,14 @@ export function TaskList({ view }: { view: View }) {
           if (!menu) return;
           if (id === "toggle") toggle(menu.task);
           if (id === "delete") deleting.request(menu.task);
-          if (id === "myDay") toggleMyDay(menu.task.id);
-          if (id === "dueToday") setDue(menu.task.id, today());
-          if (id === "dueTomorrow") setDue(menu.task.id, addDays(today(), 1));
-          if (id === "dueRemove") setDue(menu.task.id, null);
+          const { task } = menu;
+          // In My Day or Planned these move the row, or take it out
+          animateRows(() => {
+            if (id === "myDay") toggleMyDay(task.id);
+            if (id === "dueToday") setDue(task.id, today());
+            if (id === "dueTomorrow") setDue(task.id, addDays(today(), 1));
+            if (id === "dueRemove") setDue(task.id, null);
+          });
         }}
       />
       {deleting.element}
@@ -239,6 +270,7 @@ function taskMenu(task: Task): MenuEntry[] {
 function AddTask({ newTask }: { newTask: NonNullable<View["newTask"]> }) {
   const [title, setTitle] = useState("");
   const { addTask } = useActions();
+  const shortcuts = useAppState((s) => setting(s, "keyboardShortcuts"));
 
   return (
     <form
@@ -246,13 +278,17 @@ function AddTask({ newTask }: { newTask: NonNullable<View["newTask"]> }) {
       onSubmit={(e) => {
         e.preventDefault();
         const { listId, fields } = newTask;
-        if (addTask(listId, title, fields)) setTitle("");
+        if (!title.trim()) return;
+        setTitle("");
+        animateRows(() => addTask(listId, title, fields));
       }}
     >
       <Icon name="add" className={styles.addIcon} />
       <input
         className={styles.addInput}
         aria-label="Add a task"
+        aria-keyshortcuts={shortcuts ? "N" : undefined}
+        data-shortcut="add-task"
         placeholder="Add a task"
         value={title}
         maxLength={255}

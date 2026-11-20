@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { Fragment, useEffect, useRef, useState } from "react";
 import type { Task } from "../data/model.ts";
 import { useActions } from "../state/AppContext.tsx";
 import { relativeDay } from "../ui/dates.ts";
@@ -15,6 +15,7 @@ import { StarToggle } from "./tasks/StarToggle.tsx";
 import { TaskCheck } from "./tasks/TaskCheck.tsx";
 import { useDeleteTask } from "./tasks/useDeleteTask.tsx";
 import { useToggleCompleted } from "./tasks/useToggleCompleted.ts";
+import { useUi } from "./uiStore.ts";
 
 interface DetailPaneProps {
   task: Task;
@@ -25,58 +26,77 @@ export function DetailPane({ task, onClose }: DetailPaneProps) {
   const toggleCompleted = useToggleCompleted();
   const { toggleImportant } = useActions();
   const deleting = useDeleteTask();
+  const pane = useRef<HTMLElement>(null);
+  const focusWanted = useUi((s) => s.focusDetails);
+
+  // Opened with Enter: the focus goes where the user went, Escape brings it back
+  useEffect(() => {
+    if (!focusWanted) return;
+    pane.current?.focus();
+    useUi.getState().setFocusDetails(false);
+  }, [focusWanted]);
 
   return (
     <aside
+      ref={pane}
+      tabIndex={-1}
       aria-label="Task details"
       className={styles.detail}
+      data-exit="slide"
       data-done={task.completedAt !== null || undefined}
       onKeyDown={(e) => {
-        if (e.key === "Escape") onClose();
+        if (e.key === "Escape") {
+          // Handled, so the app-wide Escape doesn't close it a second time
+          e.preventDefault();
+          onClose();
+        }
       }}
     >
-      <div className={styles.top}>
-        <IconButton icon="close" label="Close details" onPress={onClose} />
-      </div>
-      <div className={styles.scroll}>
-        <section className={styles.card}>
-          <div className={styles.titleRow}>
-            <TaskCheck
-              done={task.completedAt !== null}
-              label={task.title}
-              onToggle={() => toggleCompleted(task)}
-            />
-            <TitleField task={task} />
-            <StarToggle
-              important={task.important}
-              taskTitle={task.title}
-              onToggle={() => toggleImportant(task.id)}
-            />
-          </div>
-          <Steps taskId={task.id} />
-        </section>
-        <section className={styles.card}>
-          <MyDay task={task} />
-        </section>
-        <section className={styles.card}>
-          <Reminder task={task} />
-          <DueDate task={task} />
-          <Repeat task={task} />
-        </section>
-        <section className={styles.card}>
-          <NotesField task={task} />
-        </section>
-      </div>
-      <footer className={styles.footer}>
-        <span className={styles.created}>
-          Created {relativeDay(task.createdAt)}
-        </span>
-        <IconButton
-          icon="delete"
-          label="Delete task"
-          onPress={() => deleting.request(task)}
-        />
-      </footer>
+      {/* Keyed inside, so the pane itself stays when another task opens and only slides in once */}
+      <Fragment key={task.id}>
+        <div className={styles.top}>
+          <IconButton icon="close" label="Close details" onPress={onClose} />
+        </div>
+        <div className={styles.scroll}>
+          <section className={styles.card}>
+            <div className={styles.titleRow}>
+              <TaskCheck
+                done={task.completedAt !== null}
+                label={task.title}
+                onToggle={() => toggleCompleted(task)}
+              />
+              <TitleField task={task} />
+              <StarToggle
+                important={task.important}
+                taskTitle={task.title}
+                onToggle={() => toggleImportant(task.id)}
+              />
+            </div>
+            <Steps taskId={task.id} />
+          </section>
+          <section className={styles.card}>
+            <MyDay task={task} />
+          </section>
+          <section className={styles.card}>
+            <Reminder task={task} />
+            <DueDate task={task} />
+            <Repeat task={task} />
+          </section>
+          <section className={styles.card}>
+            <NotesField task={task} />
+          </section>
+        </div>
+        <footer className={styles.footer}>
+          <span className={styles.created}>
+            Created {relativeDay(task.createdAt)}
+          </span>
+          <IconButton
+            icon="delete"
+            label="Delete task"
+            onPress={() => deleting.request(task)}
+          />
+        </footer>
+      </Fragment>
       {deleting.element}
     </aside>
   );

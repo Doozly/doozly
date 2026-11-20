@@ -88,6 +88,8 @@ export interface Settings {
   addNewTasksOnTop: boolean;
   moveStarredToTop: boolean;
   playCompletionSound: boolean;
+  /** Single-key shortcuts like N and D. They can be turned off, for WCAG 2.1.4. */
+  keyboardShortcuts: boolean;
   /**
    * AES key (base64) that seals reminder payloads for the relay. Not a preference, but
    * settings.json is how the user's other devices get it. "" until the first one's needed.
@@ -101,6 +103,7 @@ export const defaultSettings: Settings = {
   addNewTasksOnTop: true,
   moveStarredToTop: true,
   playCompletionSound: true,
+  keyboardShortcuts: true,
   reminderKey: "",
 };
 

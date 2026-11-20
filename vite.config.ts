@@ -14,9 +14,9 @@ export default defineConfig({
       filename: "sw.ts",
       injectRegister: false,
       injectManifest: {
-        // No precaching yet, offline comes with the phase 7 PWA work
-        injectionPoint: undefined,
         rollupFormat: "iife",
+        // Everything the app needs to open offline, icons included
+        globPatterns: ["**/*.{js,css,html,svg,png,webmanifest,woff2}"],
       },
       manifest: {
         name: "Doozly",
@@ -51,5 +51,11 @@ export default defineConfig({
     include: ["src/**/*.test.{ts,tsx}"],
     setupFiles: ["src/test/setup.ts"],
     css: true,
+    // Tests run the same everywhere, whatever is in someone's .env.local
+    env: {
+      VITE_GOOGLE_CLIENT_ID: "",
+      VITE_MICROSOFT_CLIENT_ID: "",
+      VITE_RELAY_URL: "",
+    },
   },
 });

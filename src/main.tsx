@@ -2,18 +2,13 @@ import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { App } from "./App.tsx";
 import { SessionProvider } from "./app/account/SessionContext.tsx";
+import { listenForInstall } from "./app/pwa/install.ts";
+import { registerServiceWorker } from "./app/pwa/serviceWorker.ts";
 import { openDb } from "./data/db.ts";
-import { registerServiceWorker } from "./reminders/push.ts";
 import { AppProvider } from "./state/AppContext.tsx";
 import { createActions } from "./state/actions.ts";
 import { createApp } from "./state/store.ts";
-import { createGoogleAuth } from "./sync/google/auth.ts";
-import { createMicrosoftAuth } from "./sync/microsoft/auth.ts";
-import {
-  type AccountAuth,
-  createSession,
-  type ProviderKind,
-} from "./sync/session.ts";
+import type { Session } from "./sync/session.ts";
 import "./index.css";
 
 const root = document.getElementById("root");
@@ -27,42 +22,31 @@ if (import.meta.env.DEV && location.pathname === "/dev/sync") {
 }
 
 async function start(root: HTMLElement) {
+  listenForInstall();
   try {
     // A newer tab wants to upgrade the database, so this old one steps aside
     const db = await openDb({ onBlocking: () => location.reload() });
     const app = createApp(db);
     await app.load();
-
-    // A sign-in is only offered when its client ID is set
-    const auths: Partial<Record<ProviderKind, AccountAuth>> = {};
-    const {
-      VITE_GOOGLE_CLIENT_ID: google,
-      VITE_MICROSOFT_CLIENT_ID: microsoft,
-    } = import.meta.env;
-    if (google) {
-      auths.google = createGoogleAuth({
-        clientId: google,
-        relayUrl: import.meta.env.VITE_RELAY_URL,
-      });
-    }
-    if (microsoft) {
-      auths.microsoft = createMicrosoftAuth({
-        clientId: microsoft,
-        relayUrl: import.meta.env.VITE_RELAY_URL,
-      });
-    }
-    const session = createSession({ app, auths });
-    void session.start();
     registerServiceWorker();
 
-    createRoot(root).render(
-      <StrictMode>
-        <AppProvider value={{ app, actions: createActions(app) }}>
-          <SessionProvider value={session}>
-            <App />
-          </SessionProvider>
-        </AppProvider>
-      </StrictMode>,
+    const actions = createActions(app);
+    const reactRoot = createRoot(root);
+    const render = (session: Session | null) =>
+      reactRoot.render(
+        <StrictMode>
+          <AppProvider value={{ app, actions }}>
+            <SessionProvider value={session}>
+              <App />
+            </SessionProvider>
+          </AppProvider>
+        </StrictMode>,
+      );
+    render(null);
+    // The tasks are all here already, sign-in and sync can come a moment after
+    import("./sync/start.ts").then(
+      ({ startSession }) => render(startSession(app)),
+      (err) => console.error("Sync couldn't load", err),
     );
   } catch (err) {
     console.error(err);

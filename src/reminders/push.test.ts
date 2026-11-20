@@ -1,5 +1,10 @@
-import { expect, test } from "vitest";
-import { pushSupport } from "./push.ts";
+import { afterEach, expect, test, vi } from "vitest";
+import { NoWorkerError, pushSupport, subscribePush } from "./push.ts";
+import type { Relay } from "./relay.ts";
+
+afterEach(() => {
+  vi.unstubAllGlobals();
+});
 
 function env({
   ua = "Mozilla/5.0 (X11; Linux x86_64)",
@@ -48,4 +53,18 @@ test("an iPad pretends to be a Mac, its touch screen says otherwise", () => {
 
 test("anything else without push just doesn't have it", () => {
   expect(pushSupport(env({ push: false }))).toBe("unsupported");
+});
+
+test("subscribing without a service worker fails at once, not waiting for one forever", async () => {
+  vi.stubGlobal("Notification", { permission: "granted" });
+  vi.stubGlobal("navigator", {
+    serviceWorker: {
+      getRegistration: async () => undefined,
+      // Like the real one with nothing registered: never settles
+      ready: new Promise(() => {}),
+    },
+  });
+  await expect(subscribePush({} as Relay)).rejects.toBeInstanceOf(
+    NoWorkerError,
+  );
 });

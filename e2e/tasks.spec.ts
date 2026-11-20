@@ -77,8 +77,14 @@ test("the detail pane edits the title as you type", async ({ page }) => {
   await expect(pane.getByRole("textbox", { name: "Task title" })).toHaveValue(
     "Buy milk and eggs",
   );
-  await page.keyboard.press("Escape");
   await pane.getByRole("textbox", { name: "Task title" }).focus();
+  await page.keyboard.press("Escape");
+  await expect(pane).toBeHidden();
+
+  // Also with nothing focused
+  await page.getByRole("link", { name: "Buy milk and eggs" }).click();
+  await expect(pane).toBeVisible();
+  await page.evaluate(() => (document.activeElement as HTMLElement).blur());
   await page.keyboard.press("Escape");
   await expect(pane).toBeHidden();
 });

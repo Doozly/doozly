@@ -25,6 +25,11 @@ interface UiState {
   renamingGroupId: string | null;
   /** What's typed in the search box. It's not in the URL, a reload starts a fresh search. */
   search: string;
+  /** The keyboard shortcuts help, and whether it was ever opened (so it loads only then) */
+  shortcutsOpen: boolean;
+  shortcutsUsed: boolean;
+  /** A task was opened from the keyboard, so the details pane should take the focus */
+  focusDetails: boolean;
   toggleSidebar(): void;
   setDrawerOpen(open: boolean): void;
   toggleCompleted(listId: string): void;
@@ -32,6 +37,8 @@ interface UiState {
   toggleGroup(groupId: string): void;
   setRenamingGroup(groupId: string | null): void;
   setSearch(search: string): void;
+  setShortcutsOpen(open: boolean): void;
+  setFocusDetails(focus: boolean): void;
 }
 
 export const useUi = create<UiState>()((set, get) => ({
@@ -42,6 +49,9 @@ export const useUi = create<UiState>()((set, get) => ({
   groupsFolded: {},
   renamingGroupId: null,
   search: "",
+  shortcutsOpen: false,
+  shortcutsUsed: false,
+  focusDetails: false,
   toggleSidebar() {
     const sidebarCollapsed = !get().sidebarCollapsed;
     set({ sidebarCollapsed });
@@ -70,5 +80,15 @@ export const useUi = create<UiState>()((set, get) => ({
   },
   setSearch(search) {
     set({ search });
+  },
+  setFocusDetails(focusDetails) {
+    set({ focusDetails });
+  },
+  setShortcutsOpen(shortcutsOpen) {
+    set(
+      shortcutsOpen
+        ? { shortcutsOpen, shortcutsUsed: true }
+        : { shortcutsOpen },
+    );
   },
 }));

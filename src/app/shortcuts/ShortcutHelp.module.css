@@ -1,0 +1,129 @@
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 30;
+  display: grid;
+  place-items: center;
+  padding: var(--space-4);
+  background: var(--color-scrim);
+}
+
+.overlay[data-entering] {
+  animation: fade var(--duration-normal) var(--ease-enter);
+}
+
+.modal {
+  width: min(480px, 100%);
+  max-height: 100%;
+  overflow-y: auto;
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-high);
+}
+
+.modal[data-entering] {
+  animation: pop var(--duration-normal) var(--ease-enter);
+}
+
+.dialog {
+  display: grid;
+  padding: var(--space-3) var(--space-6) var(--space-6);
+  outline: none;
+}
+
+.top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-right: calc(-1 * var(--space-3));
+}
+
+.title {
+  margin: 0;
+  font: var(--font-title);
+}
+
+.subtitle {
+  margin: var(--space-4) 0 var(--space-1);
+  font: var(--font-subtitle);
+}
+
+.note {
+  margin: 0 0 var(--space-2);
+  color: var(--color-text-secondary);
+}
+
+.keys {
+  margin: 0;
+}
+
+.row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-4);
+  padding: var(--space-1-5) 0;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.label {
+  font: var(--font-body);
+}
+
+.combo {
+  flex: none;
+  margin: 0;
+}
+
+.or {
+  color: var(--color-text-secondary);
+  font: var(--font-caption);
+}
+
+.kbd {
+  display: inline-block;
+  min-width: 24px;
+  padding: 0 var(--space-1-5);
+  border: 1px solid var(--color-border-strong);
+  border-bottom-width: 2px;
+  border-radius: var(--radius-md);
+  background: var(--color-bg);
+  font: var(--font-body-strong);
+  text-align: center;
+}
+
+.done {
+  justify-self: end;
+  min-width: 96px;
+  height: 32px;
+  margin-top: var(--space-6);
+  padding: 0 var(--space-4);
+  border: 1px solid var(--accent);
+  border-radius: var(--radius-md);
+  background: var(--accent);
+  color: var(--accent-on);
+  font: var(--font-body-strong);
+  cursor: pointer;
+}
+
+.done[data-hovered] {
+  background: var(--accent-hover);
+}
+
+.done[data-focus-visible] {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
+@keyframes fade {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes pop {
+  from {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+}

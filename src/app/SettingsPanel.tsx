@@ -1,11 +1,20 @@
-import { Label, Radio, RadioGroup, Switch } from "react-aria-components";
+import { useState } from "react";
+import {
+  Button,
+  Label,
+  Radio,
+  RadioGroup,
+  Switch,
+} from "react-aria-components";
 import type { Settings } from "../data/model.ts";
 import { useActions, useAppState } from "../state/AppContext.tsx";
 import { setting } from "../state/actions.ts";
 import { SidePanel } from "../ui/SidePanel.tsx";
 import { DataSection } from "./account/DataSection.tsx";
+import { InstallSection } from "./pwa/InstallSection.tsx";
 import { PushSection } from "./reminders/PushSection.tsx";
 import styles from "./SettingsPanel.module.css";
+import { ShortcutHelp } from "./shortcuts/ShortcutHelp.tsx";
 
 type Toggle = {
   [K in keyof Settings]: Settings[K] extends boolean ? K : never;
@@ -45,6 +54,7 @@ export function SettingsPanel({ isOpen, onOpenChange }: SettingsPanelProps) {
 function SettingsForm() {
   const settings = useAppState((s) => s.settings);
   const { setSetting } = useActions();
+  const [help, setHelp] = useState(false);
   const current = <K extends keyof Settings>(key: K) =>
     setting({ settings }, key);
 
@@ -81,7 +91,29 @@ function SettingsForm() {
         ))}
       </RadioGroup>
 
+      <section className={styles.section}>
+        <h3 className={styles.sectionTitle}>Keyboard</h3>
+        <Switch
+          className={styles.switch}
+          isSelected={current("keyboardShortcuts")}
+          onChange={(on) => setSetting("keyboardShortcuts", on)}
+        >
+          <span className={styles.switchLabel}>Single-key shortcuts</span>
+          <span className={styles.track} aria-hidden>
+            <span className={styles.thumb} />
+          </span>
+        </Switch>
+        <Button className={styles.link} onPress={() => setHelp(true)}>
+          Show keyboard shortcuts
+        </Button>
+        {/* Its own, inside the panel: one from the shell would sit outside the panel's
+            focus trap, which then pulls the focus back from it */}
+        <ShortcutHelp isOpen={help} onClose={() => setHelp(false)} />
+      </section>
+
       <PushSection />
+
+      <InstallSection />
 
       <DataSection />
     </div>

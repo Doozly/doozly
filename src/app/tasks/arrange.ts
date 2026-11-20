@@ -136,7 +136,9 @@ export function groupTasks(
   const byHeading = new Map<string, Task[]>();
   for (const t of tasks) {
     const h = headingOf(by, t, now);
-    byHeading.set(h, [...(byHeading.get(h) ?? []), t]);
+    const group = byHeading.get(h);
+    if (group) group.push(t);
+    else byHeading.set(h, [t]);
   }
   const { order, last } =
     by === "title"
@@ -161,7 +163,9 @@ export function groupByList(
 ): TaskGroup[] {
   const byList = new Map<string, Task[]>();
   for (const t of tasks) {
-    byList.set(t.listId, [...(byList.get(t.listId) ?? []), t]);
+    const group = byList.get(t.listId);
+    if (group) group.push(t);
+    else byList.set(t.listId, [t]);
   }
   return [...byList.entries()]
     .flatMap(([id, tasks]) => {

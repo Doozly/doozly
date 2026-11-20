@@ -10,6 +10,8 @@ import { useToday } from "../../ui/useToday.ts";
 import type { DragData } from "../dnd/DragAndDrop.tsx";
 import { MOVE_KEYS, moveKey } from "../dnd/reorder.ts";
 import { paths } from "../routes.ts";
+import { arrowFocus } from "../shortcuts/arrows.ts";
+import { useUi } from "../uiStore.ts";
 import { StarToggle } from "./StarToggle.tsx";
 import { TaskCheck } from "./TaskCheck.tsx";
 import styles from "./TaskRow.module.css";
@@ -72,6 +74,7 @@ export function TaskRow({
       ref={setNodeRef}
       className={styles.row}
       style={{ transform: CSS.Translate.toString(transform), transition }}
+      data-task-id={task.id}
       data-selected={selected || undefined}
       data-done={done || undefined}
       data-dragging={isDragging || undefined}
@@ -93,11 +96,16 @@ export function TaskRow({
           className={styles.title}
           aria-current={selected ? "true" : undefined}
           aria-keyshortcuts={reorder ? MOVE_KEYS : undefined}
+          data-nav="task"
           draggable={false}
           onKeyDown={(e) => {
             if (isMenuKey(e)) {
               e.preventDefault();
               onMenu(task, menuPointFor(e.currentTarget));
+            }
+            if (arrowFocus(e)) return;
+            if (e.key === "Enter" && !e.altKey && !e.ctrlKey && !e.metaKey) {
+              useUi.getState().setFocusDetails(true);
             }
             const by = moveKey(e);
             if (by && onMove) {

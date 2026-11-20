@@ -1,6 +1,8 @@
 import { useEffect, useRef } from "react";
 import { useLocation } from "wouter";
 import { INBOX_ID } from "../../data/model.ts";
+import { useAppState } from "../../state/AppContext.tsx";
+import { setting } from "../../state/actions.ts";
 import { Icon } from "../../ui/Icon.tsx";
 import { IconButton } from "../../ui/IconButton.tsx";
 import { paths, useSelection } from "../routes.ts";
@@ -16,6 +18,7 @@ export function SearchBox() {
   const { listId } = useSelection();
   const searching = listId === SEARCH_ID;
   const cameFrom = useRef<string | null>(null);
+  const shortcuts = useAppState((s) => setting(s, "keyboardShortcuts"));
 
   // Leaving the results some other way, like the sidebar, ends the search
   useEffect(() => {
@@ -35,6 +38,8 @@ export function SearchBox() {
         type="search"
         className={styles.input}
         aria-label="Search"
+        aria-keyshortcuts={shortcuts ? "F /" : undefined}
+        data-shortcut="search"
         placeholder="Search"
         value={query}
         maxLength={255}

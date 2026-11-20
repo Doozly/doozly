@@ -134,3 +134,26 @@ test("an import refuses what isn't a Doozly export", () => {
     ),
   ).toThrow(BadFileError);
 });
+
+test("a list file stays small: a thousand real-sized tasks under 600 kB", () => {
+  const list = createList({ title: "Big one", position: "a0" });
+  const tasks = Array.from({ length: 1000 }, (_, i) =>
+    createTask({
+      listId: list.id,
+      title: `Ring the dentist about the appointment ${i}`,
+      position: `a${i}`,
+      note:
+        i % 2 ? "A note about it with some more words, like a real one." : "",
+      dueDate: i % 4 ? null : "2026-11-20",
+    }),
+  );
+  const steps = tasks
+    .filter((_, i) => i % 5 === 0)
+    .flatMap((t) =>
+      [0, 1, 2].map((s) =>
+        createStep({ taskId: t.id, title: `Step ${s}`, position: `a${s}` }),
+      ),
+    );
+  const size = encode({ schema: SCHEMA_VERSION, list, tasks, steps }).length;
+  expect(size).toBeLessThan(600_000);
+});

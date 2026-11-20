@@ -34,6 +34,7 @@ import { MOVE_KEYS, moveKey, nudge } from "./dnd/reorder.ts";
 import { useListMenu } from "./lists/useListMenu.tsx";
 import { paths, useSelection } from "./routes.ts";
 import styles from "./Sidebar.module.css";
+import { arrowFocus } from "./shortcuts/arrows.ts";
 import { useUi } from "./uiStore.ts";
 import { listView, SMART_IDS, smartView, type View } from "./views.ts";
 
@@ -105,7 +106,7 @@ export function Sidebar({ onCollapse, onNavigate }: SidebarProps) {
   );
 
   return (
-    <nav aria-label="Lists" className={styles.sidebar}>
+    <nav aria-label="Lists" className={styles.sidebar} data-nav-root>
       {onCollapse && (
         <div className={styles.top}>
           <IconButton icon="menu" label="Hide sidebar" onPress={onCollapse} />
@@ -285,6 +286,7 @@ function ListItem({
         aria-current={view.id === listId ? "page" : undefined}
         aria-keyshortcuts={onMove ? MOVE_KEYS : undefined}
         data-accent={view.accent}
+        data-nav="list"
         draggable={false}
         onClick={onNavigate}
         onContextMenu={(e) => {
@@ -297,6 +299,7 @@ function ListItem({
             e.preventDefault();
             onMenu(list, menuPointFor(e.currentTarget));
           }
+          if (arrowFocus(e)) return;
           const by = moveKey(e);
           if (by && onMove) {
             e.preventDefault();
@@ -428,6 +431,7 @@ function GroupItem({
             className={styles.groupHeader}
             aria-expanded={!folded}
             aria-keyshortcuts={MOVE_KEYS}
+            data-nav="list"
             onClick={() => toggleGroup(group.id)}
             onContextMenu={(e) => {
               e.preventDefault();
@@ -438,6 +442,7 @@ function GroupItem({
                 e.preventDefault();
                 onMenu(group, menuPointFor(e.currentTarget), empty);
               }
+              if (arrowFocus(e)) return;
               const by = moveKey(e);
               if (by) {
                 e.preventDefault();

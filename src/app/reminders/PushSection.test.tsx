@@ -86,6 +86,18 @@ test("blocked notifications say how to fix it, and the switch stays off", async 
   expect(toggle).not.toBeChecked();
 });
 
+test("without a service worker it says so instead of hanging", async () => {
+  vi.mocked(push.subscribePush).mockRejectedValue(new push.NoWorkerError());
+  show({ url: "https://api", support: "ok" });
+  const toggle = screen.getByRole("switch");
+  await waitFor(() => expect(toggle).toBeEnabled());
+  await userEvent.click(toggle);
+  expect(await screen.findByRole("alert")).toHaveTextContent(
+    /can't receive notifications/,
+  );
+  expect(toggle).not.toBeChecked();
+});
+
 test("it shows when this device is subscribed already", async () => {
   vi.mocked(push.pushSubscribed).mockResolvedValue(true);
   show({ url: "https://api", support: "ok" });

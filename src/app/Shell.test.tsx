@@ -7,7 +7,7 @@ import { INBOX_ID } from "../data/model.ts";
 import { AppProvider } from "../state/AppContext.tsx";
 import { testApp } from "../test/app.ts";
 import { setViewportWidth } from "../test/setup.ts";
-import { Shell } from "./Shell.tsx";
+import { DetailPane, Shell } from "./Shell.tsx";
 import { useUi } from "./uiStore.ts";
 
 beforeEach(() => {
@@ -15,6 +15,7 @@ beforeEach(() => {
 });
 
 async function renderAt(path: string) {
+  await DetailPane.preload();
   const t = await testApp();
   const location = memoryLocation({ path, record: true });
   render(

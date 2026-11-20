@@ -8,6 +8,17 @@ async function drag(
   to: Locator,
   { dy = 0, hold = 0 }: { dy?: number; hold?: number } = {},
 ) {
+  // Rows still sliding from the last change aren't where they'll be
+  await page.waitForFunction(() =>
+    document
+      .getAnimations()
+      .every(
+        (a) =>
+          !(a.effect as KeyframeEffect | null)?.target?.closest?.(
+            "[data-task-id]",
+          ),
+      ),
+  );
   const a = await from.boundingBox();
   const b = await to.boundingBox();
   if (!a || !b) throw new Error("not on screen");

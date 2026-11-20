@@ -5,6 +5,20 @@
   flex: none;
   border-left: 1px solid var(--color-border);
   background: var(--color-bg);
+  /* Closing slides out through src/ui/motion.ts */
+  animation: detail-in var(--duration-normal) var(--ease-enter);
+}
+
+.detail:focus-visible {
+  outline: 2px solid var(--color-focus);
+  outline-offset: -2px;
+}
+
+@keyframes detail-in {
+  from {
+    opacity: 0;
+    transform: translateX(32px);
+  }
 }
 
 .top {

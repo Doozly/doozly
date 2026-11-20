@@ -3,6 +3,7 @@ import { Router } from "wouter";
 import { memoryLocation } from "wouter/memory-location";
 import { App } from "../App.tsx";
 import { SessionProvider } from "../app/account/SessionContext.tsx";
+import { DetailPane } from "../app/Shell.tsx";
 import { AppProvider } from "../state/AppContext.tsx";
 import type { Actions } from "../state/actions.ts";
 import type { App as AppStore } from "../state/store.ts";
@@ -15,6 +16,8 @@ export async function renderApp(
   seed?: (actions: Actions) => void,
   withSession?: (app: AppStore) => Session,
 ) {
+  // Loaded up front, like the idle preload does in the real app
+  await DetailPane.preload();
   const t = await testApp();
   seed?.(t.actions);
   const session = withSession?.(t.app) ?? null;

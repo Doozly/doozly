@@ -11,7 +11,7 @@ interface Env {
 
 const browser = (): Env => ({ navigator, window });
 
-function isAppleMobile({ navigator: n }: Env): boolean {
+export function isAppleMobile({ navigator: n }: Env = browser()): boolean {
   // iPadOS says it's a Mac, the touch points give it away
   return (
     /iPhone|iPad|iPod/.test(n.userAgent) ||
@@ -19,7 +19,9 @@ function isAppleMobile({ navigator: n }: Env): boolean {
   );
 }
 
-function installed({ navigator: n, window: w }: Env): boolean {
+export function installed(
+  { navigator: n, window: w }: Env = browser(),
+): boolean {
   return (
     w.matchMedia?.("(display-mode: standalone)").matches ||
     (n as Navigator & { standalone?: boolean }).standalone === true
@@ -35,18 +37,16 @@ export function pushSupport(env: Env = browser()): PushSupport {
   return isAppleMobile(env) && !installed(env) ? "install" : "unsupported";
 }
 
-/** In the built web app only. The desktop app does its own notifications. */
-export function registerServiceWorker() {
-  if (!import.meta.env.PROD || "__TAURI_INTERNALS__" in window) return;
-  if (!("serviceWorker" in navigator)) return;
-  void navigator.serviceWorker.register("/sw.js").catch((err: unknown) => {
-    console.warn("Service worker didn't register", err);
-  });
-}
-
 export class PushBlockedError extends Error {
   constructor() {
     super("Notifications are blocked for Doozly");
+  }
+}
+
+/** No service worker to take the pushes, like in `pnpm dev` or a browser with them turned off */
+export class NoWorkerError extends Error {
+  constructor() {
+    super("No service worker in this window");
   }
 }
 
@@ -64,6 +64,10 @@ const sameBytes = (a: ArrayBuffer | null, b: Uint8Array) =>
 /** Subscribes this browser and tells the relay. Call it from a click, for the permission prompt. */
 export async function subscribePush(relay: Relay): Promise<void> {
   if ((await askToNotify()) !== "granted") throw new PushBlockedError();
+  // Without a registered worker `ready` waits forever, and the switch would just hang
+  if (!(await navigator.serviceWorker.getRegistration())) {
+    throw new NoWorkerError();
+  }
   const registration = await navigator.serviceWorker.ready;
   const key = keyBytes(await relay.pushKey());
   let subscription = await registration.pushManager.getSubscription();

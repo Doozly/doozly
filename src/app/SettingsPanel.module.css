@@ -76,3 +76,22 @@
 .radio[data-selected] .dot {
   border: 5px solid var(--accent);
 }
+
+.link {
+  justify-self: start;
+  padding: var(--space-1) 0;
+  border: none;
+  background: none;
+  color: var(--accent);
+  font: var(--font-body);
+  cursor: pointer;
+}
+
+.link[data-hovered] {
+  text-decoration: underline;
+}
+
+.link[data-focus-visible] {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 2px;
+}

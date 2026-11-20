@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Switch } from "react-aria-components";
 import {
+  NoWorkerError,
   PushBlockedError,
   type PushSupport,
   pushSubscribed,
@@ -50,7 +51,9 @@ export function PushSection({
       setError(
         err instanceof PushBlockedError
           ? "Notifications are blocked for Doozly. Allow them in your browser's settings for this site, then try again."
-          : "Couldn't reach the Doozly server. Try again in a moment.",
+          : err instanceof NoWorkerError
+            ? "This browser window can't receive notifications. Try a normal window rather than a private one, or reload Doozly."
+            : "Couldn't reach the Doozly server. Try again in a moment.",
       );
     } finally {
       setBusy(false);

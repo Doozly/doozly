@@ -171,3 +171,20 @@ test("empty lists say so", async () => {
   await userEvent.click(screen.getByRole("link", { name: "Trip" }));
   expect(screen.getByText(/Nothing here yet/)).toBeVisible();
 });
+
+test("a long list paints its first rows, then every one arrives", async () => {
+  await renderApp("/", (a) => {
+    for (let i = 0; i < 150; i++) a.addTask(INBOX_ID, `Task ${i}`);
+    for (let i = 0; i < 3; i++) {
+      const t = a.addTask(INBOX_ID, `Done ${i}`);
+      if (t) a.toggleCompleted(t.id);
+    }
+  });
+  await waitFor(() => expect(openTitles()).toHaveLength(150));
+  expect(openTitles()[0]).toBe("Task 149");
+  expect(
+    within(screen.getByRole("list", { name: "Completed tasks" })).getAllByRole(
+      "checkbox",
+    ),
+  ).toHaveLength(3);
+});

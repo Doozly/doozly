@@ -1,14 +1,37 @@
 import { openDB } from "idb";
+import {
+  cleanupOutdatedCaches,
+  createHandlerBoundToURL,
+  type PrecacheEntry,
+  precacheAndRoute,
+} from "workbox-precaching";
+import { NavigationRoute, registerRoute } from "workbox-routing";
 import { importReminderKey } from "../reminders/crypto.ts";
 import {
   openFromNotification,
   showReminder,
 } from "../reminders/pushMessages.ts";
 
-declare const self: ServiceWorkerGlobalScope;
+declare const self: ServiceWorkerGlobalScope & {
+  __WB_MANIFEST: (string | PrecacheEntry)[];
+};
 
-self.addEventListener("install", () => {
-  void self.skipWaiting();
+// The whole built app, so it opens offline. The list is filled in at build time.
+precacheAndRoute(self.__WB_MANIFEST);
+cleanupOutdatedCaches();
+// Every page path is the app itself (/lists/…), also offline
+registerRoute(
+  new NavigationRoute(createHandlerBoundToURL("/index.html"), {
+    denylist: [/^\/redirect\.html/, /^\/dev\//],
+  }),
+);
+
+// A new version waits until the user says reload. Taking over by itself would pull
+// the old build's lazy chunks out from under a tab that still needs them.
+self.addEventListener("message", (event) => {
+  if ((event.data as { type?: string } | null)?.type === "SKIP_WAITING") {
+    void self.skipWaiting();
+  }
 });
 
 self.addEventListener("activate", (event) => {
