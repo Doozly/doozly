@@ -7,10 +7,12 @@ import {
   Popover,
 } from "react-aria-components";
 import { useShallow } from "zustand/shallow";
+import { unsubscribePush } from "../../reminders/push.ts";
 import { SignInError } from "../../sync/provider.ts";
 import type { Account, ProviderKind } from "../../sync/session.ts";
 import { ConfirmDialog } from "../../ui/ConfirmDialog.tsx";
 import { Icon } from "../../ui/Icon.tsx";
+import { useRelay } from "../reminders/useRelay.ts";
 import styles from "./AccountButton.module.css";
 import { useSession, useSessionState } from "./SessionContext.tsx";
 import { providerNames, storageNames, syncMessage } from "./syncMessage.ts";
@@ -157,6 +159,7 @@ function SignedIn({
   confirmMerge: Confirm;
 }) {
   const session = useSession();
+  const relay = useRelay();
   const message = useSessionState(useShallow(syncMessage));
   const busy = useSessionState(
     (s) => s.elsewhere || s.sync?.phase === "syncing",
@@ -215,7 +218,11 @@ function SignedIn({
         </Button>
         <Button
           className={styles.secondary}
-          onPress={() => void session?.signOut()}
+          onPress={async () => {
+            // This device stops getting pushes, while the relay still knows who we are
+            await unsubscribePush(relay).catch(() => {});
+            await session?.signOut();
+          }}
         >
           <Icon name="signOut" size={16} />
           Sign out

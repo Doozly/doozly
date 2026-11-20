@@ -24,7 +24,11 @@ type Config struct {
 	// Only on the server, never in the SPA. Without it the Google token endpoints are off.
 	GoogleClientSecret string
 	MicrosoftClientID  string
-	LogLevel           slog.Level
+	// Web push. Without the key pair the push endpoints and the reminder loop are off.
+	VAPIDPublicKey  string
+	VAPIDPrivateKey string
+	VAPIDSubject    string
+	LogLevel        slog.Level
 }
 
 // Load reads the RELAY_* and provider variables. Only the session key is a must.
@@ -43,6 +47,9 @@ func Load(getenv func(string) string) (Config, error) {
 		GoogleClientID:     get("GOOGLE_CLIENT_ID", ""),
 		GoogleClientSecret: get("GOOGLE_CLIENT_SECRET", ""),
 		MicrosoftClientID:  get("MICROSOFT_CLIENT_ID", ""),
+		VAPIDPublicKey:     get("VAPID_PUBLIC_KEY", ""),
+		VAPIDPrivateKey:    get("VAPID_PRIVATE_KEY", ""),
+		VAPIDSubject:       get("VAPID_SUBJECT", ""),
 	}
 
 	key, err := base64.StdEncoding.DecodeString(get("RELAY_SESSION_KEY", ""))
@@ -71,6 +78,13 @@ func Load(getenv func(string) string) (Config, error) {
 
 	if cfg.GoogleClientSecret != "" && cfg.GoogleClientID == "" {
 		return cfg, errors.New("GOOGLE_CLIENT_SECRET without GOOGLE_CLIENT_ID")
+	}
+
+	if (cfg.VAPIDPublicKey == "") != (cfg.VAPIDPrivateKey == "") {
+		return cfg, errors.New("VAPID_PUBLIC_KEY and VAPID_PRIVATE_KEY go together (make a pair with: relay -vapid-keys)")
+	}
+	if cfg.VAPIDPublicKey != "" && cfg.VAPIDSubject == "" {
+		return cfg, errors.New("VAPID_SUBJECT is needed for push, a mailto: address or an https URL")
 	}
 
 	if err := cfg.LogLevel.UnmarshalText([]byte(get("RELAY_LOG_LEVEL", "info"))); err != nil {

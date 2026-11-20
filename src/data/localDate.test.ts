@@ -1,6 +1,7 @@
 import { expect, test } from "vitest";
 import {
   addDays,
+  daysBetween,
   dueBucket,
   endOfWeek,
   formatDue,
@@ -21,6 +22,12 @@ test("adding days crosses months, years and leap days", () => {
   expect(addDays("2026-12-31", 1)).toBe("2027-01-01");
   expect(addDays("2028-02-28", 1)).toBe("2028-02-29");
   expect(addDays("2026-03-01", -1)).toBe("2026-02-28");
+});
+
+test("days between counts whole days, either way", () => {
+  expect(daysBetween("2026-11-20", "2026-11-20")).toBe(0);
+  expect(daysBetween("2026-02-27", "2026-03-02")).toBe(3);
+  expect(daysBetween("2027-01-01", "2026-12-25")).toBe(-7);
 });
 
 test("next week is always the coming Monday", () => {

@@ -20,7 +20,7 @@ import menu from "../../ui/ContextMenu.module.css";
 import { Icon } from "../../ui/Icon.tsx";
 import { IconButton } from "../../ui/IconButton.tsx";
 import { useToday } from "../../ui/useToday.ts";
-import styles from "./DueDate.module.css";
+import styles from "./PickerRow.module.css";
 
 const DueCalendar = lazy(() => import("./DueCalendar.tsx"));
 

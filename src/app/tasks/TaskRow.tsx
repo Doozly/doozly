@@ -3,6 +3,7 @@ import { CSS } from "@dnd-kit/utilities";
 import { Link } from "wouter";
 import { formatDue, inMyDay, isBefore } from "../../data/localDate.ts";
 import type { Task } from "../../data/model.ts";
+import { formatReminder } from "../../reminders/times.ts";
 import { isMenuKey, menuPointFor } from "../../ui/ContextMenu.tsx";
 import { Icon } from "../../ui/Icon.tsx";
 import { useToday } from "../../ui/useToday.ts";
@@ -30,6 +31,15 @@ interface TaskRowProps {
   onMenu: (task: Task, at: { x: number; y: number }) => void;
   /** Alt+Up and Alt+Down. Left out where the order isn't the user's own. */
   onMove?: (task: Task, by: -1 | 1) => void;
+}
+
+function RepeatMark() {
+  return (
+    <>
+      <Icon name="repeat" size={14} />
+      <span className="visually-hidden">, repeats</span>
+    </>
+  );
 }
 
 export function TaskRow({
@@ -98,7 +108,13 @@ export function TaskRow({
         >
           {task.title}
         </Link>
-        {(listName || myDay || due || steps || hasNote) && (
+        {(listName ||
+          myDay ||
+          due ||
+          task.reminderAt !== null ||
+          task.repeat ||
+          steps ||
+          hasNote) && (
           <div className={styles.meta}>
             {listName && <span>{listName}</span>}
             {myDay && (
@@ -117,6 +133,19 @@ export function TaskRow({
                 <span className="visually-hidden">Due </span>
                 {formatDue(due, now)}
                 {overdue && <span className="visually-hidden">, overdue</span>}
+                {task.repeat && <RepeatMark />}
+              </span>
+            )}
+            {task.reminderAt !== null && (
+              <span className={styles.due}>
+                <Icon name="reminder" size={14} />
+                <span className="visually-hidden">Reminder </span>
+                {formatReminder(task.reminderAt, now)}
+              </span>
+            )}
+            {!due && task.repeat && (
+              <span className={styles.metaIcon}>
+                <RepeatMark />
               </span>
             )}
             {steps && (

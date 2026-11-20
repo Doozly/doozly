@@ -25,6 +25,12 @@ export function addDays(d: LocalDate, days: number): LocalDate {
   return fromDate(date);
 }
 
+/** Whole days from `a` to `b`, negative when `b` is earlier */
+export function daysBetween(a: LocalDate, b: LocalDate): number {
+  // Rounding swallows the hour a DST change adds or takes
+  return Math.round((toDate(b).getTime() - toDate(a).getTime()) / 86_400_000);
+}
+
 /** The Monday after `d`, which is what To Do means by "next week" */
 export function nextWeek(d: LocalDate): LocalDate {
   const weekday = toDate(d).getDay(); // Sunday is 0

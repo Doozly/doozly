@@ -19,6 +19,7 @@
     "e2e": "playwright test",
     "relay": "cd relay && go run . -env relay.env",
     "relay:test": "cd relay && go vet ./... && go test ./...",
+    "relay:deploy": "sh relay/deploy/deploy.sh",
     "prepare": "simple-git-hooks"
   },
   "simple-git-hooks": {
@@ -59,6 +60,9 @@
     "simple-git-hooks": "^2.14.0",
     "typescript": "^7.0.2",
     "vite": "^8.3.8",
-    "vitest": "^5.1.1"
+    "vite-plugin-pwa": "2.0.0",
+    "vitest": "^5.1.1",
+    "workbox-build": "7.4.1",
+    "workbox-window": "7.4.1"
   }
 }

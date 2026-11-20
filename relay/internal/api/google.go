@@ -155,6 +155,14 @@ func (s *server) googleRefresh(w http.ResponseWriter, r *http.Request) {
 		fail(w, http.StatusBadGateway, "upstream")
 		return
 	}
+	// The refresh token outlives our session by months, also the session gets renewed here
+	if tokens.IDToken != "" {
+		if id, err := s.Verifier.Verify(r.Context(), "google", tokens.IDToken); err == nil {
+			s.Sessions.Issue(w, id.UserID)
+		} else {
+			s.Log.Error("google refreshed with an ID token we can't verify", "err", err)
+		}
+	}
 	writeJSON(w, http.StatusOK, accessToken{tokens.AccessToken, tokens.ExpiresIn, tokens.Scope})
 }
 

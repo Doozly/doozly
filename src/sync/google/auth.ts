@@ -293,6 +293,18 @@ export function createGoogleAuth({
       );
     },
 
+    /** A refresh through the relay renews its session too */
+    relaySession: relayUrl
+      ? async (): Promise<boolean> => {
+          try {
+            await refresh();
+            return true;
+          } catch {
+            return false;
+          }
+        }
+      : undefined,
+
     /** Google said no to the token, so it's no good any more, however long it should have lasted */
     expire() {
       token = null;

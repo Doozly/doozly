@@ -38,6 +38,8 @@ export interface AccountAuth {
   expire?(): void;
   /** Loads the library ahead, so a later popup still counts as part of the click */
   preload?(): Promise<unknown>;
+  /** Gets a relay session for this account, without a popup. true when that worked. */
+  relaySession?(): Promise<boolean>;
 }
 
 export interface SessionState {
@@ -286,6 +288,13 @@ export function createSession({
     },
 
     syncNow: () => engine?.syncNow() ?? Promise.resolve(),
+
+    /** A relay session for whoever is signed in, for when the relay answered 401 */
+    async renewRelay(): Promise<boolean> {
+      const account = state.getState().account;
+      const auth = account && auths[account.provider];
+      return (await auth?.relaySession?.().catch(() => false)) ?? false;
+    },
 
     /** Waits for this tab's sync to finish what it's doing, for tests */
     settled: () => engine?.settled() ?? Promise.resolve(),

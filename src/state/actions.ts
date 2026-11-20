@@ -17,6 +17,7 @@ import {
   type Step,
   type Task,
 } from "../data/model.ts";
+import { nextDates } from "../data/repeat.ts";
 import { changes, latestStamp, mergeSnapshots } from "../sync/merge.ts";
 import { uniqueTitle } from "./naming.ts";
 import { byPosition, positionBetween } from "./position.ts";
@@ -131,11 +132,34 @@ export function createActions({ store, commit }: App) {
       return task ? commit({ tasks: [touch(task, patch)] }) : null;
     },
 
-    toggleCompleted(id: string): Undo | null {
+    /**
+     * Completing a repeating task leaves a fresh copy in its place, with the next
+     * dates and its steps unticked. The done one keeps no rule, so ticking it off
+     * again later doesn't make a second copy.
+     */
+    toggleCompleted(id: string, now: LocalDate = today()): Undo | null {
       const task = liveTask(id);
       if (!task) return null;
-      const completedAt = task.completedAt === null ? Date.now() : null;
-      return commit({ tasks: [touch(task, { completedAt })] });
+      if (task.completedAt !== null) {
+        return commit({ tasks: [touch(task, { completedAt: null })] });
+      }
+      const done = touch(task, { completedAt: Date.now() });
+      const next = nextDates(task, now);
+      if (!next) return commit({ tasks: [done] });
+
+      const siblings = tasksIn(task.listId);
+      const before = siblings[siblings.findIndex((t) => t.id === id) - 1];
+      const copy = createTask({
+        ...contentOf(task),
+        ...next,
+        position: positionBetween(before?.position ?? null, task.position),
+      });
+      return commit({
+        tasks: [{ ...done, repeat: null }, copy],
+        steps: stepsOf(id).map((s) =>
+          createStep({ ...contentOf(s), taskId: copy.id, completedAt: null }),
+        ),
+      });
     },
 
     toggleImportant(id: string): Undo | null {

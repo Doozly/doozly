@@ -8,6 +8,8 @@ import { useDebounced } from "../ui/useDebounced.ts";
 import styles from "./DetailPane.module.css";
 import { DueDate } from "./detail/DueDate.tsx";
 import { MyDay } from "./detail/MyDay.tsx";
+import { Reminder } from "./detail/Reminder.tsx";
+import { Repeat } from "./detail/Repeat.tsx";
 import { Steps } from "./detail/Steps.tsx";
 import { StarToggle } from "./tasks/StarToggle.tsx";
 import { TaskCheck } from "./tasks/TaskCheck.tsx";
@@ -57,7 +59,9 @@ export function DetailPane({ task, onClose }: DetailPaneProps) {
           <MyDay task={task} />
         </section>
         <section className={styles.card}>
+          <Reminder task={task} />
           <DueDate task={task} />
+          <Repeat task={task} />
         </section>
         <section className={styles.card}>
           <NotesField task={task} />

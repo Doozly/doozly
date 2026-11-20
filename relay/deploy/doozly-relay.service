@@ -1,0 +1,47 @@
+[Unit]
+Description=Doozly relay
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=doozly-relay
+Group=doozly-relay
+EnvironmentFile=/etc/doozly-relay/relay.env
+ExecStart=/usr/local/bin/doozly-relay
+Restart=always
+RestartSec=2
+TimeoutStopSec=20
+StateDirectory=doozly-relay
+StateDirectoryMode=0700
+WorkingDirectory=/var/lib/doozly-relay
+UMask=0077
+
+# It only needs its own folder and outbound network
+NoNewPrivileges=yes
+ProtectSystem=strict
+ProtectHome=yes
+PrivateTmp=yes
+PrivateDevices=yes
+ProtectKernelTunables=yes
+ProtectKernelModules=yes
+ProtectKernelLogs=yes
+ProtectControlGroups=yes
+ProtectClock=yes
+ProtectHostname=yes
+ProtectProc=invisible
+RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX
+RestrictNamespaces=yes
+RestrictRealtime=yes
+RestrictSUIDSGID=yes
+LockPersonality=yes
+MemoryDenyWriteExecute=yes
+SystemCallArchitectures=native
+SystemCallFilter=@system-service
+SystemCallFilter=~@privileged
+SystemCallErrorNumber=EPERM
+CapabilityBoundingSet=
+AmbientCapabilities=
+
+[Install]
+WantedBy=multi-user.target

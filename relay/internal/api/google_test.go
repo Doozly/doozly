@@ -36,6 +36,8 @@ func (fakeGoogle) Refresh(_ context.Context, rt string) (google.Tokens, error) {
 	switch rt {
 	case "rt":
 		return google.Tokens{AccessToken: "at2", ExpiresIn: 3599, Scope: "s"}, nil
+	case "rt-openid":
+		return google.Tokens{AccessToken: "at2", ExpiresIn: 3599, IDToken: "good-7", Scope: "s"}, nil
 	case "down":
 		return google.Tokens{}, errors.New("timeout")
 	}
@@ -129,6 +131,13 @@ func TestGoogleRefresh(t *testing.T) {
 	w := refresh(sealed("rt"))
 	if w.Code != 200 || body(t, w)["accessToken"] != "at2" {
 		t.Errorf("good cookie: %d", w.Code)
+	}
+	if cookieNamed(w, sessionCookie) != nil {
+		t.Error("no ID token, so no new session")
+	}
+	// With an ID token from Google the relay session gets renewed too
+	if w := refresh(sealed("rt-openid")); w.Code != 200 || cookieNamed(w, sessionCookie) == nil {
+		t.Errorf("session not renewed: %d", w.Code)
 	}
 	if w := refresh(nil); w.Code != 401 {
 		t.Errorf("no cookie: %d", w.Code)

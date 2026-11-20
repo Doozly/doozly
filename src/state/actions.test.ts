@@ -50,6 +50,65 @@ test("complete and important toggle back and forth", async () => {
   expect(state().tasks[t.id]?.completedAt).toBeNull();
 });
 
+test("completing a repeating task leaves the next one in its place", async () => {
+  const { actions, state } = await testApp();
+  actions.setSetting("addNewTasksOnTop", false);
+  actions.addTask(INBOX_ID, "Before");
+  const t = actions.addTask(INBOX_ID, "Bins out", {
+    dueDate: "2026-11-19",
+    repeat: { unit: "week", interval: 1, weekdays: [4] },
+    important: true,
+    note: "Blue one too",
+  });
+  actions.addTask(INBOX_ID, "After");
+  if (!t) throw new Error("no task");
+  const step = actions.addStep(t.id, "Recycling");
+  if (step) actions.toggleStep(step.id);
+
+  const undo = actions.toggleCompleted(t.id, "2026-11-20");
+  const done = state().tasks[t.id];
+  expect(done?.completedAt).toBeTypeOf("number");
+  expect(done?.repeat).toBeNull();
+
+  const copy = Object.values(state().tasks).find(
+    (x) => x.title === "Bins out" && x.id !== t.id,
+  );
+  expect(copy).toMatchObject({
+    dueDate: "2026-11-26",
+    completedAt: null,
+    important: true,
+    note: "Blue one too",
+    repeat: { unit: "week", interval: 1, weekdays: [4] },
+  });
+  const open = Object.values(state().tasks)
+    .filter((x) => x.completedAt === null)
+    .sort(byPosition)
+    .map((x) => x.title);
+  expect(open).toEqual(["Before", "Bins out", "After"]);
+  const steps = Object.values(state().steps).filter(
+    (s) => s.taskId === copy?.id,
+  );
+  expect(steps).toMatchObject([{ title: "Recycling", completedAt: null }]);
+
+  undo?.();
+  expect(state().tasks[t.id]).toMatchObject({ completedAt: null });
+  expect(state().tasks[t.id]?.repeat).not.toBeNull();
+  expect(copy && state().tasks[copy.id]?.deletedAt).not.toBeNull();
+});
+
+test("ticking a done repeating task back on makes no copy", async () => {
+  const { actions, state } = await testApp();
+  const t = actions.addTask(INBOX_ID, "Water plants", {
+    dueDate: "2026-11-19",
+    repeat: { unit: "day", interval: 2 },
+  });
+  if (!t) throw new Error("no task");
+  actions.toggleCompleted(t.id);
+  actions.toggleCompleted(t.id);
+  actions.toggleCompleted(t.id);
+  expect(Object.values(state().tasks)).toHaveLength(2);
+});
+
 test("deleting a task takes its steps, and undo brings both back", async () => {
   const { actions, state } = await testApp();
   const t = actions.addTask(INBOX_ID, "Shop");

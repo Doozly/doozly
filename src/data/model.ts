@@ -53,6 +53,11 @@ export interface RepeatRule {
   interval: number;
   /** Only for unit "week". Sunday is 0, like Date#getDay. */
   weekdays?: Weekday[];
+  /**
+   * Only for "month" and "year": the day of the month it was set on. Short months
+   * clamp to their last day, and the next long one goes back to it.
+   */
+  monthDay?: number;
 }
 
 export interface Task extends Entity {
@@ -83,6 +88,11 @@ export interface Settings {
   addNewTasksOnTop: boolean;
   moveStarredToTop: boolean;
   playCompletionSound: boolean;
+  /**
+   * AES key (base64) that seals reminder payloads for the relay. Not a preference, but
+   * settings.json is how the user's other devices get it. "" until the first one's needed.
+   */
+  reminderKey: string;
 }
 
 export const defaultSettings: Settings = {
@@ -91,6 +101,7 @@ export const defaultSettings: Settings = {
   addNewTasksOnTop: true,
   moveStarredToTop: true,
   playCompletionSound: true,
+  reminderKey: "",
 };
 
 // One record per setting, so two devices changing different settings don't clash

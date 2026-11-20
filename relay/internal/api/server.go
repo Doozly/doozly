@@ -22,7 +22,10 @@ type Options struct {
 	Verifier identity.Verifier
 	Sessions Sessions
 	// nil when there's no Google client secret, then the Google endpoints aren't there
-	Google         GoogleTokens
+	Google GoogleTokens
+	// Both or neither. Without a VAPID key there's no push, and its endpoints aren't there.
+	Push           PushStore
+	VAPIDPublicKey string
 	AllowedOrigins []string
 	TrustedProxies []netip.Prefix
 	Log            *slog.Logger
@@ -69,6 +72,12 @@ func New(o Options) http.Handler {
 		mux.HandleFunc("POST /v1/auth/google/token", s.googleToken)
 		mux.HandleFunc("POST /v1/auth/google/refresh", s.googleRefresh)
 		mux.HandleFunc("DELETE /v1/auth/google", s.googleSignOut)
+	}
+	if o.Push != nil && o.VAPIDPublicKey != "" {
+		mux.HandleFunc("GET /v1/push/key", s.pushKey)
+		mux.Handle("PUT /v1/push/subscription", s.signedIn(http.HandlerFunc(s.putSubscription)))
+		mux.Handle("DELETE /v1/push/subscription", s.signedIn(http.HandlerFunc(s.deleteSubscription)))
+		mux.Handle("PUT /v1/reminders", s.signedIn(http.HandlerFunc(s.putReminders)))
 	}
 
 	return s.recover(s.logRequests(s.limitIPs(s.cors(mux))))

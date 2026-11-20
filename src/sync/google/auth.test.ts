@@ -237,3 +237,15 @@ test("with the relay, signing out drops the cookie there", async () => {
   expect(relay.signedIn).toBe(false);
   await expect(auth.token()).rejects.toThrow("Not signed in to Google");
 });
+
+test("a relay session comes back through a refresh, and only with the relay", async () => {
+  expect(setup().auth.relaySession).toBeUndefined();
+
+  const { auth, relay } = setup({ response: {} }, { relayUrl: RELAY });
+  await auth.signIn();
+  expect(await auth.relaySession?.()).toBe(true);
+  expect(relay.calls.at(-1)).toBe("POST /v1/auth/google/refresh");
+
+  relay.signedIn = false;
+  expect(await auth.relaySession?.()).toBe(false);
+});

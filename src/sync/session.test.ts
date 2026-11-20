@@ -350,3 +350,20 @@ test("an account with no storage can't sign in, and is told why", async () => {
   expect(microsoft.signOut).toHaveBeenCalled();
   expect(session.state.getState()).toMatchObject({ account: null, sync: null });
 });
+
+test("a relay session is asked of whoever is signed in", async () => {
+  const google = { ...fakeAuth(), relaySession: vi.fn(async () => true) };
+  const t = await tab({
+    cloud: createMemoryProvider(),
+    auths: { google },
+    storage: fakeStorage(),
+  });
+  await t.session.start();
+  expect(await t.session.renewRelay()).toBe(false);
+  expect(google.relaySession).not.toHaveBeenCalled();
+
+  await t.session.signIn("google");
+  expect(await t.session.renewRelay()).toBe(true);
+  google.relaySession.mockRejectedValueOnce(new Error("offline"));
+  expect(await t.session.renewRelay()).toBe(false);
+});

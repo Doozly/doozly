@@ -6,7 +6,7 @@ import { Icon } from "../../ui/Icon.tsx";
 import { IconButton } from "../../ui/IconButton.tsx";
 import { useToday } from "../../ui/useToday.ts";
 // Same look as the due date row
-import styles from "./DueDate.module.css";
+import styles from "./PickerRow.module.css";
 
 export function MyDay({ task }: { task: Task }) {
   const { toggleMyDay } = useActions();

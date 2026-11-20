@@ -42,6 +42,22 @@
   color: var(--color-text-secondary);
 }
 
+.lines {
+  display: grid;
+}
+
+.sub {
+  color: var(--color-text-secondary);
+  font: var(--font-caption);
+}
+
+.note {
+  margin: 0;
+  padding: 0 var(--space-4) var(--space-3) calc(2 * var(--space-4) + 20px);
+  color: var(--color-text-secondary);
+  font: var(--font-caption);
+}
+
 .pickLabel {
   flex: 1;
 }

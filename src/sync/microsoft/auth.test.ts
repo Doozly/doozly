@@ -125,3 +125,38 @@ test("signing out forgets the account here", async () => {
   expect(auth.account()).toBeNull();
   await expect(auth.token()).rejects.toThrow("Not signed in to Microsoft");
 });
+
+test("with the relay, the ID token buys a relay session, and sign-out drops it", async () => {
+  const msal = fakeMsal();
+  msal.acquireTokenSilent.mockResolvedValue({
+    ...result(personal),
+    idToken: "id.token.here",
+  } as AuthenticationResult);
+  const fetch = vi.fn(async () => new Response(null, { status: 200 }));
+  const auth = createMicrosoftAuth({
+    clientId: "client",
+    relayUrl: "https://api",
+    create: async () => msal as unknown as Msal,
+    fetch,
+  });
+  expect(await auth.relaySession?.()).toBe(false);
+
+  await auth.signIn();
+  expect(await auth.relaySession?.()).toBe(true);
+  expect(fetch).toHaveBeenCalledWith("https://api/v1/session", {
+    method: "POST",
+    credentials: "include",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ provider: "microsoft", idToken: "id.token.here" }),
+  });
+
+  await auth.signOut();
+  expect(fetch).toHaveBeenLastCalledWith("https://api/v1/session", {
+    method: "DELETE",
+    credentials: "include",
+  });
+});
+
+test("without the relay there's no relay session to get", () => {
+  expect(setup().auth.relaySession).toBeUndefined();
+});

@@ -62,5 +62,6 @@ jobs:
           go-version-file: relay/go.mod
           cache-dependency-path: relay/go.sum
       - run: test -z "$(gofmt -l .)"
+      - run: shellcheck deploy/*.sh ../scripts/*.sh
       - run: go vet ./...
       - run: go test -race ./...

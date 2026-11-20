@@ -100,3 +100,29 @@ func TestReadEnvFile(t *testing.T) {
 		t.Error("a line without = should fail")
 	}
 }
+
+func TestVAPID(t *testing.T) {
+	base := map[string]string{"RELAY_SESSION_KEY": key}
+	with := func(extra map[string]string) map[string]string {
+		m := map[string]string{}
+		for k, v := range base {
+			m[k] = v
+		}
+		for k, v := range extra {
+			m[k] = v
+		}
+		return m
+	}
+	if _, err := Load(env(with(map[string]string{"VAPID_PUBLIC_KEY": "pub"}))); err == nil {
+		t.Error("half a key pair should fail")
+	}
+	if _, err := Load(env(with(map[string]string{"VAPID_PUBLIC_KEY": "pub", "VAPID_PRIVATE_KEY": "priv"}))); err == nil {
+		t.Error("no subject should fail")
+	}
+	cfg, err := Load(env(with(map[string]string{
+		"VAPID_PUBLIC_KEY": "pub", "VAPID_PRIVATE_KEY": "priv", "VAPID_SUBJECT": "mailto:hello@doozly.app",
+	})))
+	if err != nil || cfg.VAPIDPublicKey != "pub" || cfg.VAPIDSubject != "mailto:hello@doozly.app" {
+		t.Errorf("%+v %v", cfg, err)
+	}
+}

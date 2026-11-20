@@ -1,0 +1,9 @@
+# Goes to /etc/cloudflared/config.yml. Put in the id that `cloudflared tunnel create` printed.
+tunnel: TUNNEL_ID
+credentials-file: /etc/cloudflared/TUNNEL_ID.json
+
+ingress:
+  # 127.0.0.1, not localhost: the relay only listens on IPv4 loopback and trusts CF-Connecting-IP from there
+  - hostname: api.doozly.app
+    service: http://127.0.0.1:8080
+  - service: http_status:404

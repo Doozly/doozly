@@ -4,6 +4,7 @@ import { useActions, useAppState } from "../state/AppContext.tsx";
 import { setting } from "../state/actions.ts";
 import { SidePanel } from "../ui/SidePanel.tsx";
 import { DataSection } from "./account/DataSection.tsx";
+import { PushSection } from "./reminders/PushSection.tsx";
 import styles from "./SettingsPanel.module.css";
 
 type Toggle = {
@@ -79,6 +80,8 @@ function SettingsForm() {
           </Radio>
         ))}
       </RadioGroup>
+
+      <PushSection />
 
       <DataSection />
     </div>

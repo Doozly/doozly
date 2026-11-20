@@ -70,13 +70,18 @@ function signInFailure(err: unknown): SignInError {
 
 interface AuthOptions {
   clientId: string;
+  /** With the relay, MSAL's ID token gets a relay session for push reminders */
+  relayUrl?: string;
   create?: (clientId: string) => Promise<Msal>;
+  fetch?: typeof fetch;
 }
 
 /** Microsoft sign-in with MSAL, auth code and PKCE. The refresh token lasts 24 hours, then it needs a popup again. */
 export function createMicrosoftAuth({
   clientId,
+  relayUrl,
   create = createMsal,
+  fetch: fetchImpl = (...args) => fetch(...args),
 }: AuthOptions) {
   let msal: Promise<Msal> | undefined;
   const client = () => {
@@ -151,12 +156,37 @@ export function createMicrosoftAuth({
 
     account: () => current && toAccount(current),
 
+    /** Swaps MSAL's ID token for a relay session. No popup, so false once MSAL would need one. */
+    relaySession: relayUrl
+      ? async (): Promise<boolean> => {
+          if (!current) return false;
+          const m = await client();
+          const { idToken } = await m.acquireTokenSilent({
+            scopes: SCOPES,
+            account: current,
+          });
+          const res = await fetchImpl(`${relayUrl}/v1/session`, {
+            method: "POST",
+            credentials: "include",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ provider: "microsoft", idToken }),
+          });
+          return res.ok;
+        }
+      : undefined,
+
     /** Forgets the account here. Doesn't sign out of Microsoft as a whole. */
     async signOut() {
       const m = await client();
       const old = current;
       current = null;
       if (old) await m.clearCache({ account: old });
+      if (relayUrl) {
+        await fetchImpl(`${relayUrl}/v1/session`, {
+          method: "DELETE",
+          credentials: "include",
+        }).catch(() => {});
+      }
     },
   };
 }

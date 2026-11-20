@@ -3,6 +3,7 @@ import { createRoot } from "react-dom/client";
 import { App } from "./App.tsx";
 import { SessionProvider } from "./app/account/SessionContext.tsx";
 import { openDb } from "./data/db.ts";
+import { registerServiceWorker } from "./reminders/push.ts";
 import { AppProvider } from "./state/AppContext.tsx";
 import { createActions } from "./state/actions.ts";
 import { createApp } from "./state/store.ts";
@@ -44,10 +45,15 @@ async function start(root: HTMLElement) {
         relayUrl: import.meta.env.VITE_RELAY_URL,
       });
     }
-    if (microsoft)
-      auths.microsoft = createMicrosoftAuth({ clientId: microsoft });
+    if (microsoft) {
+      auths.microsoft = createMicrosoftAuth({
+        clientId: microsoft,
+        relayUrl: import.meta.env.VITE_RELAY_URL,
+      });
+    }
     const session = createSession({ app, auths });
     void session.start();
+    registerServiceWorker();
 
     createRoot(root).render(
       <StrictMode>
