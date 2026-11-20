@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Switch } from "react-aria-components";
+import { isDesktop } from "../../platform.ts";
 import {
   NoWorkerError,
   PushBlockedError,
@@ -32,12 +33,14 @@ export function PushSection({
 
   // Only asked when the switch will show. Without a relay there's no subscription anyway,
   // and in some WebKit builds getSubscription() never comes back and freezes the page.
-  const canPush = Boolean(url) && signedIn && support === "ok";
+  // Web push is for the browser. The desktop app gets native notifications instead.
+  const web = Boolean(url) && !isDesktop();
+  const canPush = web && signedIn && support === "ok";
   useEffect(() => {
     if (canPush) void pushSubscribed().then(setOn);
   }, [canPush]);
 
-  if (!url) return null;
+  if (!web) return null;
 
   const toggle = async (next: boolean) => {
     if (!relay) return;

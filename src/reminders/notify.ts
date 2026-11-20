@@ -1,8 +1,11 @@
+import { isDesktop } from "../platform.ts";
 import type { Reminder } from "./reminders.ts";
 
 export type NotifyPermission = NotificationPermission | "unsupported";
 
 export function notifyPermission(): NotifyPermission {
+  // The desktop app shows native notifications, nothing to ask the webview for
+  if (isDesktop()) return "granted";
   return typeof Notification === "undefined"
     ? "unsupported"
     : Notification.permission;

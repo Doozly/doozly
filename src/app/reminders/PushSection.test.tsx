@@ -45,6 +45,16 @@ test("without a relay there's nothing to switch on", () => {
   expect(container).toBeEmptyDOMElement();
 });
 
+test("the desktop app has no web push", () => {
+  Object.assign(window, { __TAURI_INTERNALS__: {} });
+  try {
+    const { container } = show({ url: "https://api", support: "ok" });
+    expect(container).toBeEmptyDOMElement();
+  } finally {
+    Reflect.deleteProperty(window, "__TAURI_INTERNALS__");
+  }
+});
+
 test("signed out, it says to sign in", () => {
   show({ url: "https://api", support: "ok" }, { signedIn: false });
   expect(screen.getByText(/Sign in to get reminders/)).toBeVisible();

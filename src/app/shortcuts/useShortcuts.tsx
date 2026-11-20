@@ -1,5 +1,6 @@
-import { lazy, Suspense, useEffect } from "react";
+import { lazy, Suspense, useEffect, useEffectEvent } from "react";
 import { useLocation } from "wouter";
+import { isDesktop, isMac, onDesktopEvent } from "../../platform.ts";
 import { useActions, useApp, useAppState } from "../../state/AppContext.tsx";
 import { setting } from "../../state/actions.ts";
 import { uniqueTitle } from "../../state/naming.ts";
@@ -13,8 +14,10 @@ import { useUi } from "../uiStore.ts";
 import { focusTaskSoon } from "./arrows.ts";
 import {
   inOverlay,
+  SHORTCUTS,
   type ShortcutAction,
   shortcutFor,
+  toDoShortcutFor,
   typingIn,
 } from "./keys.ts";
 
@@ -94,6 +97,13 @@ export function useShortcuts() {
     const onKey = (e: KeyboardEvent) => {
       if (e.defaultPrevented) return;
       const target = document.activeElement;
+      if (isDesktop()) {
+        const todo = toDoShortcutFor(e, isMac());
+        if (todo && !inOverlay(target)) {
+          if (run(todo)) e.preventDefault();
+          return;
+        }
+      }
       if (typingIn(target) || inOverlay(target)) return;
       if (e.key === "Escape" && taskId && listId) {
         const closing = taskId;
@@ -109,6 +119,14 @@ export function useShortcuts() {
     document.addEventListener("keydown", onKey);
     return () => document.removeEventListener("keydown", onKey);
   });
+
+  // The desktop app's tray and menus ask for the same actions. Not tied to the
+  // single-key setting: those come with Ctrl or from a click.
+  const fromDesktop = useEffectEvent((action: string) => {
+    const known = SHORTCUTS.find((s) => s.action === action);
+    if (known) run(known.action);
+  });
+  useEffect(() => onDesktopEvent<string>("doozly:shortcut", fromDesktop), []);
 
   return {
     element: (

@@ -1,4 +1,5 @@
 import { createStore } from "zustand/vanilla";
+import { isDesktop } from "../../platform.ts";
 
 interface UpdateState {
   /** A new version, installed and waiting for the user to reload */
@@ -13,7 +14,7 @@ const HOUR = 60 * 60 * 1000;
 export function registerServiceWorker(
   sw: ServiceWorkerContainer | undefined = navigator.serviceWorker,
 ) {
-  if (!import.meta.env.PROD || "__TAURI_INTERNALS__" in window) return;
+  if (!import.meta.env.PROD || isDesktop()) return;
   if (!sw) return;
   sw.register("/sw.js").then(watchForUpdates, (err: unknown) => {
     console.warn("Service worker didn't register", err);

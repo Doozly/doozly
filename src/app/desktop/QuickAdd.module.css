@@ -1,0 +1,35 @@
+.box {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  height: 100vh;
+  padding: 0 var(--space-4);
+  background: var(--color-surface);
+  color: var(--accent);
+}
+
+.icon {
+  flex: none;
+}
+
+.input {
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: var(--color-text);
+  font: var(--font-title);
+  outline: none;
+}
+
+.input::placeholder {
+  color: var(--accent);
+}
+
+.where {
+  flex: none;
+  color: var(--color-text-secondary);
+  font: var(--font-body);
+}

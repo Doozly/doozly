@@ -5,10 +5,11 @@ import {
   Modal,
   ModalOverlay,
 } from "react-aria-components";
+import { isDesktop, isMac } from "../../platform.ts";
 import { useAppState } from "../../state/AppContext.tsx";
 import { setting } from "../../state/actions.ts";
 import { IconButton } from "../../ui/IconButton.tsx";
-import { NAVIGATION, SHORTCUTS } from "./keys.ts";
+import { helpRows, NAVIGATION } from "./keys.ts";
 import styles from "./ShortcutHelp.module.css";
 
 interface ShortcutHelpProps {
@@ -43,9 +44,11 @@ export function ShortcutHelp({ isOpen, onClose }: ShortcutHelpProps) {
             </p>
           )}
           <p className={styles.note}>
-            They work when you're not typing in a field.
+            {isDesktop()
+              ? `The ${isMac() ? "⌘" : "Ctrl"} ones work anywhere, the single keys when you're not typing in a field.`
+              : "They work when you're not typing in a field."}
           </p>
-          <Keys rows={SHORTCUTS} label="Shortcuts" />
+          <Keys rows={helpRows(isDesktop(), isMac())} label="Shortcuts" />
           <h3 className={styles.subtitle}>Moving around</h3>
           <Keys rows={NAVIGATION} label="Moving around" />
           <Button className={styles.done} onPress={onClose} autoFocus>

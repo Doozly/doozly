@@ -1,5 +1,6 @@
 import { Button } from "react-aria-components";
 import { useStore } from "zustand";
+import { isDesktop } from "../../platform.ts";
 import { installed, isAppleMobile } from "../../reminders/push.ts";
 import data from "../account/DataSection.module.css";
 import { install, promptInstall } from "./install.ts";
@@ -8,7 +9,8 @@ import { install, promptInstall } from "./install.ts";
 export function InstallSection() {
   const offer = useStore(install, (s) => s.offer);
   const apple = isAppleMobile() && !installed();
-  if (!offer && !apple) return null;
+  // The desktop app is installed already
+  if ((!offer && !apple) || isDesktop()) return null;
 
   return (
     <section className={data.section} aria-labelledby="install-title">

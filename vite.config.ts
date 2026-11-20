@@ -60,6 +60,9 @@ export default defineConfig(({ mode }) => {
         },
       }),
     ],
+    // Tauri's dev loop expects the dev server on 5173 and wants its own output left on screen
+    clearScreen: false,
+    server: { strictPort: true },
     preview: { headers: securityHeaders(relayUrl) },
     build: {
       rolldownOptions: {
@@ -69,7 +72,7 @@ export default defineConfig(({ mode }) => {
     },
     test: {
       environment: "jsdom",
-      include: ["src/**/*.test.{ts,tsx}"],
+      include: ["src/**/*.test.{ts,tsx}", "scripts/**/*.test.ts"],
       setupFiles: ["src/test/setup.ts"],
       css: true,
       // Tests run the same everywhere, whatever is in someone's .env.local

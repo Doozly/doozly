@@ -11,6 +11,7 @@ import { useActions, useAppState } from "../state/AppContext.tsx";
 import { setting } from "../state/actions.ts";
 import { SidePanel } from "../ui/SidePanel.tsx";
 import { DataSection } from "./account/DataSection.tsx";
+import { DesktopSection } from "./desktop/DesktopSection.tsx";
 import { InstallSection } from "./pwa/InstallSection.tsx";
 import { PushSection } from "./reminders/PushSection.tsx";
 import styles from "./SettingsPanel.module.css";
@@ -112,6 +113,8 @@ function SettingsForm() {
       </section>
 
       <PushSection />
+
+      <DesktopSection />
 
       <InstallSection />
 

@@ -21,6 +21,9 @@
     "relay": "cd relay && go run . -env relay.env",
     "relay:test": "cd relay && go vet ./... && go test ./...",
     "relay:deploy": "sh relay/deploy/deploy.sh",
+    "desktop": "tauri dev",
+    "desktop:build": "tauri build",
+    "desktop:test": "cd src-tauri && cargo clippy --all-targets -- -D warnings && cargo test",
     "prepare": "simple-git-hooks"
   },
   "simple-git-hooks": {
@@ -33,6 +36,7 @@
     "@dnd-kit/utilities": "^3.2.2",
     "@internationalized/date": "3.12.4",
     "@phosphor-icons/core": "^2.1.1",
+    "@tauri-apps/api": "2.12.5",
     "fractional-indexing": "^4.0.0",
     "idb": "^8.0.4",
     "react": "^19.3.1",
@@ -47,6 +51,7 @@
     "@biomejs/biome": "2.6.8",
     "@playwright/test": "^1.65.1",
     "@rolldown/plugin-babel": "^0.3.1",
+    "@tauri-apps/cli": "2.12.6",
     "@testing-library/dom": "^10.4.2",
     "@testing-library/jest-dom": "^7.0.1",
     "@testing-library/react": "^16.3.3",

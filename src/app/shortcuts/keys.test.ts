@@ -1,5 +1,11 @@
 import { expect, test } from "vitest";
-import { inOverlay, shortcutFor, typingIn } from "./keys.ts";
+import {
+  helpRows,
+  inOverlay,
+  shortcutFor,
+  toDoShortcutFor,
+  typingIn,
+} from "./keys.ts";
 
 const press = (key: string, more: Partial<KeyboardEventInit> = {}) =>
   shortcutFor({
@@ -62,4 +68,48 @@ test("menus and dialogs have their own keys", () => {
     <div role="dialog"><button id="in">x</button></div><button id="out">x</button>`;
   expect(inOverlay(document.getElementById("in"))).toBe(true);
   expect(inOverlay(document.getElementById("out"))).toBe(false);
+});
+
+const combo = (
+  code: string,
+  mods: Partial<Record<"ctrlKey" | "metaKey" | "altKey" | "shiftKey", boolean>>,
+) => ({
+  key: code.startsWith("Key") ? code.slice(3).toLowerCase() : code.slice(5),
+  code,
+  ctrlKey: false,
+  metaKey: false,
+  altKey: false,
+  shiftKey: false,
+  ...mods,
+});
+
+test("the desktop app takes To Do's own Ctrl keys, ⌘ on a Mac", () => {
+  expect(toDoShortcutFor(combo("KeyN", { ctrlKey: true }), false)).toBe(
+    "newTask",
+  );
+  expect(toDoShortcutFor(combo("KeyT", { ctrlKey: true }), false)).toBe(
+    "myDay",
+  );
+  expect(toDoShortcutFor(combo("Digit1", { ctrlKey: true }), false)).toBe(
+    "sidebar",
+  );
+  expect(toDoShortcutFor(combo("KeyN", { metaKey: true }), true)).toBe(
+    "newTask",
+  );
+  // The other platform's modifier, extra modifiers or keys To Do doesn't have
+  expect(toDoShortcutFor(combo("KeyN", { metaKey: true }), false)).toBeNull();
+  expect(toDoShortcutFor(combo("KeyN", { ctrlKey: true }), true)).toBeNull();
+  expect(
+    toDoShortcutFor(combo("KeyN", { ctrlKey: true, shiftKey: true }), false),
+  ).toBeNull();
+  expect(toDoShortcutFor(combo("KeyS", { ctrlKey: true }), false)).toBeNull();
+  expect(toDoShortcutFor(combo("KeyN", {}), false)).toBeNull();
+});
+
+test("the desktop help shows the Ctrl keys first", () => {
+  const add = (rows: ReturnType<typeof helpRows>) =>
+    rows.find((r) => r.action === "newTask")?.keys;
+  expect(add(helpRows(false, false))).toEqual(["N"]);
+  expect(add(helpRows(true, false))).toEqual(["Ctrl+N", "N"]);
+  expect(add(helpRows(true, true))).toEqual(["⌘N", "N"]);
 });

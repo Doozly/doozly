@@ -131,6 +131,26 @@ test("the browser's install offer shows a button that uses it once", async () =>
   expect(await promptInstall()).toBe(false);
 });
 
+test("the desktop app never offers to install", () => {
+  const target = new EventTarget() as unknown as Window;
+  listenForInstall(target);
+  act(() => {
+    target.dispatchEvent(
+      Object.assign(new Event("beforeinstallprompt"), {
+        prompt: vi.fn(async () => {}),
+        userChoice: Promise.resolve({ outcome: "accepted" as const }),
+      }),
+    );
+  });
+  Object.assign(window, { __TAURI_INTERNALS__: {} });
+  try {
+    const { container } = render(<InstallSection />);
+    expect(container).toBeEmptyDOMElement();
+  } finally {
+    Reflect.deleteProperty(window, "__TAURI_INTERNALS__");
+  }
+});
+
 test("once installed the offer goes", () => {
   const target = new EventTarget() as unknown as Window;
   listenForInstall(target);

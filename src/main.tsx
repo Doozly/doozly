@@ -5,6 +5,7 @@ import { SessionProvider } from "./app/account/SessionContext.tsx";
 import { listenForInstall } from "./app/pwa/install.ts";
 import { registerServiceWorker } from "./app/pwa/serviceWorker.ts";
 import { openDb } from "./data/db.ts";
+import { isDesktop } from "./platform.ts";
 import { AppProvider } from "./state/AppContext.tsx";
 import { createActions } from "./state/actions.ts";
 import { createApp } from "./state/store.ts";
@@ -17,6 +18,9 @@ if (!root) throw new Error("#root is missing in index.html");
 if (import.meta.env.DEV && location.pathname === "/dev/sync") {
   const { mountSyncProbe } = await import("./sync/probe.ts");
   mountSyncProbe(root);
+} else if (isDesktop() && location.pathname === "/quick-add") {
+  const { mountQuickAdd } = await import("./app/desktop/quickAddMain.tsx");
+  await mountQuickAdd(root);
 } else {
   await start(root);
 }

@@ -11,9 +11,9 @@ const hashOf = (text: string) =>
   `'sha256-${createHash("sha256").update(text).digest("base64")}'`;
 
 // What the app may load and talk to. The dev server goes without, Vite's hot reload needs inline scripts.
-export function contentSecurityPolicy(relayUrl?: string): string {
+export function cspDirectives(relayUrl?: string): Record<string, string[]> {
   const relay = relayUrl ? [new URL(relayUrl).origin] : [];
-  const directives: Record<string, string[]> = {
+  return {
     "default-src": ["'self'"],
     // Google's sign-in script is the only one from elsewhere, and only loads when someone signs in with Google
     "script-src": ["'self'", "https://accounts.google.com/gsi/client"],
@@ -49,7 +49,10 @@ export function contentSecurityPolicy(relayUrl?: string): string {
     "form-action": ["'none'"],
     "frame-ancestors": ["'none'"],
   };
-  return Object.entries(directives)
+}
+
+export function contentSecurityPolicy(relayUrl?: string): string {
+  return Object.entries(cspDirectives(relayUrl))
     .map(([name, values]) => `${name} ${values.join(" ")}`)
     .join("; ");
 }

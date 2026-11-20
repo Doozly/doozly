@@ -71,6 +71,48 @@ export function shortcutFor(e: KeyLike): ShortcutAction | null {
   return byKey.get(key) ?? null;
 }
 
+// To Do's real keys. In the desktop app no browser owns Ctrl, so there they work like in To Do.
+const TODO_KEYS: Partial<Record<ShortcutAction, string>> = {
+  newTask: "N",
+  newList: "L",
+  myDay: "T",
+  complete: "D",
+  search: "F",
+  sync: "R",
+  sidebar: "1",
+};
+const byToDoKey = new Map(
+  Object.entries(TODO_KEYS).map(([action, k]) => [
+    k.toLowerCase(),
+    action as ShortcutAction,
+  ]),
+);
+
+/** Ctrl (⌘ on a Mac) with To Do's key, for the desktop app. Works while typing too, as in To Do. */
+export function toDoShortcutFor(
+  e: KeyLike,
+  mac: boolean,
+): ShortcutAction | null {
+  const mod = mac ? e.metaKey && !e.ctrlKey : e.ctrlKey && !e.metaKey;
+  if (!mod || e.altKey || e.shiftKey || e.isComposing) return null;
+  // By where the key sits, so other layouts get them too
+  const key = /^Key[A-Z]$/.test(e.code)
+    ? e.code.slice(3).toLowerCase()
+    : /^Digit\d$/.test(e.code)
+      ? e.code.slice(5)
+      : e.key.toLowerCase();
+  return byToDoKey.get(key) ?? null;
+}
+
+/** The help's rows, with To Do's Ctrl keys first in the desktop app */
+export function helpRows(desktop: boolean, mac: boolean): Shortcut[] {
+  if (!desktop) return SHORTCUTS;
+  return SHORTCUTS.map((s) => {
+    const k = TODO_KEYS[s.action];
+    return k ? { ...s, keys: [mac ? `⌘${k}` : `Ctrl+${k}`, ...s.keys] } : s;
+  });
+}
+
 /** Whether keys pressed here are text, so a letter must stay a letter */
 export function typingIn(el: Element | null): boolean {
   if (!el) return false;

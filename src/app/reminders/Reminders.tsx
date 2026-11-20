@@ -1,13 +1,16 @@
 import { useEffect, useEffectEvent, useMemo, useRef, useState } from "react";
 import { Button } from "react-aria-components";
 import { useLocation } from "wouter";
+import { isDesktop, loadTauri, onDesktopEvent } from "../../platform.ts";
+import { createDesktopScheduler } from "../../reminders/desktop.ts";
 import { showNotification } from "../../reminders/notify.ts";
 import type { OpenMessage } from "../../reminders/pushMessages.ts";
-import { pendingReminders, type Reminder } from "../../reminders/reminders.ts";
 import {
-  createTabScheduler,
-  type TabScheduler,
-} from "../../reminders/tabScheduler.ts";
+  pendingReminders,
+  type Reminder,
+  type ReminderScheduler,
+} from "../../reminders/reminders.ts";
+import { createTabScheduler } from "../../reminders/tabScheduler.ts";
 import { formatTime } from "../../reminders/times.ts";
 import { useAppState } from "../../state/AppContext.tsx";
 import { Icon } from "../../ui/Icon.tsx";
@@ -24,7 +27,7 @@ export function Reminders() {
   const lists = useAppState((s) => s.lists);
   const [, navigate] = useLocation();
   const [cards, setCards] = useState<Reminder[]>([]);
-  const scheduler = useRef<TabScheduler | null>(null);
+  const scheduler = useRef<ReminderScheduler | null>(null);
 
   const open = (r: Reminder) => navigate(paths.task(r.listId, r.taskId));
   const dismiss = (id: string) =>
@@ -35,19 +38,40 @@ export function Reminders() {
     setCards((all) => [...all.filter((c) => c.taskId !== r.taskId), r]);
   });
 
-  useEffect(() => {
-    const s = createTabScheduler((r) => fire(r));
-    scheduler.current = s;
-    return () => {
-      s.dispose();
-      scheduler.current = null;
-    };
-  }, []);
-
   const reminders = useMemo(
     () => pendingReminders(tasks, lists),
     [tasks, lists],
   );
+  const current = useEffectEvent(() => reminders);
+  const go = useEffectEvent((path: string) => navigate(path));
+
+  useEffect(() => {
+    if (!isDesktop()) {
+      const s = createTabScheduler((r) => fire(r));
+      scheduler.current = s;
+      return () => {
+        s.dispose();
+        scheduler.current = null;
+      };
+    }
+    // The Rust side fires them, also with the window closed, and says which task a click opens
+    let gone = false;
+    void loadTauri().then(({ invoke }) => {
+      if (gone) return;
+      const s = createDesktopScheduler(invoke, (r) =>
+        paths.task(r.listId, r.taskId),
+      );
+      scheduler.current = s;
+      void s.sync(current());
+    });
+    const stop = onDesktopEvent<string>("doozly:open", go);
+    return () => {
+      gone = true;
+      stop();
+      scheduler.current = null;
+    };
+  }, []);
+
   useEffect(() => {
     void scheduler.current?.sync(reminders);
   }, [reminders]);
