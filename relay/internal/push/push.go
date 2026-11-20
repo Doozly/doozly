@@ -32,7 +32,11 @@ type VAPID struct {
 func (v VAPID) Send(ctx context.Context, sub store.Subscription, body []byte, ttl time.Duration) (int, error) {
 	client := v.Client
 	if client == nil {
-		client = &http.Client{Timeout: 15 * time.Second}
+		client = &http.Client{
+			Timeout: 15 * time.Second,
+			// The allowlist checked the endpoint's host, a redirect mustn't take the push somewhere else
+			CheckRedirect: func(*http.Request, []*http.Request) error { return http.ErrUseLastResponse },
+		}
 	}
 	res, err := webpush.SendNotificationWithContext(ctx, body, &webpush.Subscription{
 		Endpoint: sub.Endpoint,

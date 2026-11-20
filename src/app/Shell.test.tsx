@@ -29,17 +29,17 @@ async function renderAt(path: string) {
   return { ...t, at };
 }
 
-test("the start page goes to the Tasks list", async () => {
+test("the start page is My Day, like in To Do", async () => {
   const { at } = await renderAt("/");
   expect(
-    screen.getByRole("heading", { level: 1, name: "Tasks" }),
+    screen.getByRole("heading", { level: 1, name: "My Day" }),
   ).toBeVisible();
-  expect(at()).toBe(`/lists/${INBOX_ID}`);
+  expect(at()).toBe("/lists/my-day");
 });
 
-test("an unknown list falls back to Tasks", async () => {
+test("an unknown list falls back to My Day", async () => {
   const { at } = await renderAt("/lists/not-there");
-  expect(at()).toBe(`/lists/${INBOX_ID}`);
+  expect(at()).toBe("/lists/my-day");
 });
 
 test("picking a list in the sidebar opens it", async () => {

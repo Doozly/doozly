@@ -1,10 +1,10 @@
-import { expect, test } from "@playwright/test";
+import { expect, test } from "./fixtures.ts";
 import { waitForStored } from "./helpers.ts";
 
 test("a new list opens, and is still there after a reload", async ({
   page,
 }) => {
-  await page.goto("/");
+  await page.goto("/lists/inbox");
   const lists = page.getByRole("navigation", { name: "Lists" });
   await lists.getByRole("textbox", { name: "New list" }).fill("Groceries");
   await lists.getByRole("textbox", { name: "New list" }).press("Enter");
@@ -33,7 +33,7 @@ test("a new list opens, and is still there after a reload", async ({
 });
 
 test("rename, duplicate and delete a list", async ({ page }) => {
-  await page.goto("/");
+  await page.goto("/lists/inbox");
   const lists = page.getByRole("navigation", { name: "Lists" });
   await lists.getByRole("textbox", { name: "New list" }).fill("Groceries");
   await lists.getByRole("textbox", { name: "New list" }).press("Enter");
@@ -61,7 +61,7 @@ test("rename, duplicate and delete a list", async ({ page }) => {
     .getByRole("alertdialog")
     .getByRole("button", { name: "Delete list" })
     .click();
-  await expect(page).toHaveURL(/\/lists\/inbox$/);
+  await expect(page).toHaveURL(/\/lists\/my-day$/);
   await expect(page.locator("#root")).not.toHaveAttribute(
     "aria-hidden",
     "true",

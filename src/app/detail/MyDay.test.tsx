@@ -23,7 +23,7 @@ afterEach(() => {
 const row = () => screen.getByRole("link", { name: "Call mum" }).closest("li");
 
 test("adding from the pane marks the task, and the cross takes it out", async () => {
-  const { state } = await renderApp("/", (a) =>
+  const { state } = await renderApp("/lists/inbox", (a) =>
     a.addTask(INBOX_ID, "Call mum"),
   );
   await userEvent.click(screen.getByRole("link", { name: "Call mum" }));
@@ -46,7 +46,7 @@ test("adding from the pane marks the task, and the cross takes it out", async ()
 });
 
 test("yesterday's My Day doesn't count today", async () => {
-  await renderApp("/", (a) =>
+  await renderApp("/lists/inbox", (a) =>
     a.addTask(INBOX_ID, "Call mum", { myDay: "2026-11-18" }),
   );
   expect(row()).not.toHaveTextContent("My Day");
@@ -55,7 +55,7 @@ test("yesterday's My Day doesn't count today", async () => {
 });
 
 test("the row menu adds and removes it too", async () => {
-  const { state } = await renderApp("/", (a) =>
+  const { state } = await renderApp("/lists/inbox", (a) =>
     a.addTask(INBOX_ID, "Call mum"),
   );
   fireEvent.contextMenu(screen.getByRole("link", { name: "Call mum" }));

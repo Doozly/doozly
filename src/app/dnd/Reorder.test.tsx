@@ -60,7 +60,7 @@ test("a sorted list or a smart list can't be reordered by hand", async () => {
 });
 
 test("Alt+arrows move lists and groups in the sidebar", async () => {
-  await renderApp("/", (a) => {
+  await renderApp("/lists/inbox", (a) => {
     a.addList("A");
     a.addList("B");
     a.addGroup("Home");
@@ -80,7 +80,7 @@ test("Alt+arrows move lists and groups in the sidebar", async () => {
 });
 
 test("Alt+arrows move steps", async () => {
-  await renderApp("/", (a) => {
+  await renderApp("/lists/inbox", (a) => {
     const t = a.addTask(INBOX_ID, "Trip");
     if (!t) return;
     a.addStep(t.id, "Pack");

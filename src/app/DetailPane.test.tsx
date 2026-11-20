@@ -16,7 +16,9 @@ beforeEach(() => {
 
 /** One task in Tasks, opened in the detail pane */
 async function openTask(title = "Buy milk") {
-  const app = await renderApp("/", (a) => a.addTask(INBOX_ID, title));
+  const app = await renderApp("/lists/inbox", (a) =>
+    a.addTask(INBOX_ID, title),
+  );
   const id = Object.values(app.state().tasks)[0]?.id ?? "";
   await userEvent.click(screen.getByRole("link", { name: title }));
   const pane = screen.getByRole("complementary", { name: "Task details" });

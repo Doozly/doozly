@@ -1,7 +1,7 @@
-import { Fragment, useRef } from "react";
-import { Menu, MenuItem, Popover, Separator } from "react-aria-components";
+import { Suspense, useEffect, useRef } from "react";
 import styles from "./ContextMenu.module.css";
-import { Icon, type IconName } from "./Icon.tsx";
+import type { IconName } from "./Icon.tsx";
+import { preloadable } from "./preloadable.tsx";
 
 export interface MenuEntry {
   id: string;
@@ -10,9 +10,11 @@ export interface MenuEntry {
   danger?: boolean;
   /** Draw a line above this one */
   separated?: boolean;
+  /** Opens a submenu instead of being an action itself */
+  children?: MenuEntry[];
 }
 
-interface ContextMenuProps {
+export interface ContextMenuProps {
   /** Where to open, in viewport pixels. null means closed. */
   at: { x: number; y: number } | null;
   label: string;
@@ -21,60 +23,36 @@ interface ContextMenuProps {
   onClose: () => void;
 }
 
+// Not needed for the first paint, also it's fetched once the page is idle
+const Popup = preloadable(() =>
+  import("./ContextMenuPopup.tsx").then((m) => m.ContextMenuPopup),
+);
+
 /** A menu that opens at a point, for right-click and Shift+F10 */
-export function ContextMenu({
-  at,
-  label,
-  items,
-  onAction,
-  onClose,
-}: ContextMenuProps) {
+export function ContextMenu(props: ContextMenuProps) {
   const anchor = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const idle = window.requestIdleCallback ?? setTimeout;
+    idle(() => void Popup.preload());
+  }, []);
 
   return (
     <>
       <div
         ref={anchor}
         className={styles.anchor}
-        style={{ left: at?.x ?? 0, top: at?.y ?? 0 }}
+        style={{ left: props.at?.x ?? 0, top: props.at?.y ?? 0 }}
       />
-      <Popover
-        triggerRef={anchor}
-        isOpen={at !== null}
-        onOpenChange={(isOpen) => {
-          if (!isOpen) onClose();
-        }}
-        placement="bottom start"
-        className={styles.popover}
-      >
-        <Menu
-          aria-label={label}
-          className={styles.menu}
-          onAction={(key) => {
-            // Without a MenuTrigger nobody closes the menu for us. It has to go
-            // in the same render a follow-up dialog opens, or it stays behind it.
-            onClose();
-            onAction(String(key));
-          }}
-        >
-          {items.map((item) => (
-            <Fragment key={item.id}>
-              {item.separated && <Separator className={styles.separator} />}
-              <MenuItem
-                id={item.id}
-                textValue={item.label}
-                className={`${styles.item} ${item.danger ? styles.danger : ""}`}
-              >
-                <Icon name={item.icon} />
-                {item.label}
-              </MenuItem>
-            </Fragment>
-          ))}
-        </Menu>
-      </Popover>
+      {props.at && (
+        <Suspense fallback={null}>
+          <Popup anchor={anchor} {...props} />
+        </Suspense>
+      )}
     </>
   );
 }
+
+export const preloadContextMenu = Popup.preload;
 
 /** Where to open the menu when it comes from the keyboard */
 export function menuPointFor(el: Element) {

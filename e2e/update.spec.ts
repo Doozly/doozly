@@ -8,7 +8,7 @@ import {
 import { createServer, type Server } from "node:http";
 import { tmpdir } from "node:os";
 import { extname, join, normalize } from "node:path";
-import { expect, test } from "@playwright/test";
+import { expect, test } from "./fixtures.ts";
 
 test.skip(({ browserName }) => browserName !== "chromium", "Chromium only");
 

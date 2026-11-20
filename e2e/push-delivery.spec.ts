@@ -1,4 +1,4 @@
-import { expect, test } from "@playwright/test";
+import { expect, test } from "./fixtures.ts";
 
 // Only Chromium lets a test hand the worker a push, through DevTools. Its headless
 // shell refuses notifications outright, full Chromium in headless mode allows them.
@@ -20,7 +20,7 @@ test("the service worker opens a sealed push and shows the task", async ({
     });
   });
 
-  await page.goto("/");
+  await page.goto("/lists/inbox");
   await page.evaluate(() => navigator.serviceWorker.ready);
   const registrationId = await registered;
 

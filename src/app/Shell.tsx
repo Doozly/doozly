@@ -8,7 +8,6 @@ import {
 } from "react";
 import { Dialog, Modal, ModalOverlay } from "react-aria-components";
 import { Redirect, useLocation } from "wouter";
-import { INBOX_ID } from "../data/model.ts";
 import { useAppState } from "../state/AppContext.tsx";
 import { IconButton } from "../ui/IconButton.tsx";
 import { Logo } from "../ui/Logo.tsx";
@@ -81,9 +80,9 @@ export function Shell() {
         ? listView(list)
         : null;
 
-  // Unknown or deleted list, like an old link: go home
+  // Unknown or deleted list, like an old link: go home. To Do opens on My Day.
   if (!view) {
-    return <Redirect to={paths.list(INBOX_ID)} replace />;
+    return <Redirect to={paths.list("my-day")} replace />;
   }
   // A smart list can open any task; a normal list only its own
   const taskFits = task && (view.list === null || task.listId === view.id);

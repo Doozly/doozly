@@ -1,4 +1,4 @@
-import { expect, type Page, test } from "@playwright/test";
+import { expect, type Page, test } from "./fixtures.ts";
 import { waitForStored } from "./helpers.ts";
 import { bigExport } from "./perf-seed.ts";
 

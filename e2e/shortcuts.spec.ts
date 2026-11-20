@@ -1,8 +1,8 @@
-import { expect, test } from "@playwright/test";
+import { expect, test } from "./fixtures.ts";
 import { taskStored, waitForStored } from "./helpers.ts";
 
 test("the whole task flow from the keyboard", async ({ page }) => {
-  await page.goto("/");
+  await page.goto("/lists/inbox");
   const add = page.getByRole("textbox", { name: "Add a task" });
   await expect(add).toBeVisible();
   await page.locator("body").press("n");
@@ -50,7 +50,7 @@ test("the whole task flow from the keyboard", async ({ page }) => {
 test("search, new list, sidebar and help keys, without the browser's own", async ({
   page,
 }) => {
-  await page.goto("/");
+  await page.goto("/lists/inbox");
   await expect(page.getByRole("textbox", { name: "Add a task" })).toBeVisible();
   const search = page.getByRole("searchbox", { name: "Search" });
   // In Firefox "/" is Quick Find, it must come to us instead

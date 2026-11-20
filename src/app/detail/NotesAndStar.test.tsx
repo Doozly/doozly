@@ -20,7 +20,7 @@ const openOrder = () =>
     .map((a) => a.textContent);
 
 test("the star on a row and in the pane are the same switch", async () => {
-  const { state } = await renderApp("/", (a) =>
+  const { state } = await renderApp("/lists/inbox", (a) =>
     a.addTask(INBOX_ID, "Buy milk"),
   );
   const rowStar = screen.getByRole("button", { name: "Important: Buy milk" });
@@ -41,7 +41,7 @@ test("the star on a row and in the pane are the same switch", async () => {
 });
 
 test("starred tasks move to the top, unless that setting is off", async () => {
-  await renderApp("/", (a) => {
+  await renderApp("/lists/inbox", (a) => {
     a.setSetting("addNewTasksOnTop", false);
     a.addTask(INBOX_ID, "A");
     a.addTask(INBOX_ID, "B");
@@ -60,7 +60,7 @@ test("starred tasks move to the top, unless that setting is off", async () => {
 });
 
 test("a note saves as you type and the row shows it has one", async () => {
-  const { state } = await renderApp("/", (a) =>
+  const { state } = await renderApp("/lists/inbox", (a) =>
     a.addTask(INBOX_ID, "Buy milk"),
   );
   const row = () =>
@@ -85,7 +85,7 @@ test("a note saves as you type and the row shows it has one", async () => {
 });
 
 test("closing the pane keeps a note still being typed", async () => {
-  const { state } = await renderApp("/", (a) =>
+  const { state } = await renderApp("/lists/inbox", (a) =>
     a.addTask(INBOX_ID, "Buy milk"),
   );
   await userEvent.click(screen.getByRole("link", { name: "Buy milk" }));

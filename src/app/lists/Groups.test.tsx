@@ -37,7 +37,7 @@ test("New group starts as Untitled group, ready to be named", async () => {
 });
 
 test("a list moves into a group from its menu, and out again", async () => {
-  await renderApp("/", (a) => {
+  await renderApp("/lists/inbox", (a) => {
     a.addList("Groceries");
     a.addGroup("Home");
   });
@@ -60,7 +60,7 @@ test("a list moves into a group from its menu, and out again", async () => {
 });
 
 test("a group folds its lists away", async () => {
-  await renderApp("/", (a) => {
+  await renderApp("/lists/inbox", (a) => {
     const g = a.addGroup("Home");
     const l = a.addList("Groceries");
     a.moveListToGroup(l.id, g.id);
@@ -78,7 +78,7 @@ test("a group folds its lists away", async () => {
 });
 
 test("Ungroup lists brings them back and removes the group", async () => {
-  await renderApp("/", (a) => {
+  await renderApp("/lists/inbox", (a) => {
     const g = a.addGroup("Home");
     const l = a.addList("Groceries");
     a.moveListToGroup(l.id, g.id);
@@ -94,7 +94,7 @@ test("Ungroup lists brings them back and removes the group", async () => {
 });
 
 test("an empty group can be deleted and renamed from its menu", async () => {
-  await renderApp("/", (a) => a.addGroup("Home"));
+  await renderApp("/lists/inbox", (a) => a.addGroup("Home"));
   await menu(
     within(sidebar()).getByRole("button", { name: "Home" }),
     "Rename group",

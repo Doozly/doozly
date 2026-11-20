@@ -1,4 +1,4 @@
-import { expect, type Locator, type Page, test } from "@playwright/test";
+import { expect, type Locator, type Page, test } from "./fixtures.ts";
 import { waitForStored } from "./helpers.ts";
 
 /** Drags with the mouse in small steps, like a hand would. `hold` waits before moving. */
@@ -85,7 +85,7 @@ test("drag a task to a new spot, and it stays there", async ({ page }) => {
 test("drop a task on a list in the sidebar to move it there", async ({
   page,
 }) => {
-  await page.goto("/");
+  await page.goto("/lists/inbox");
   await newList(page, "Groceries");
   await page.getByRole("link", { name: "Tasks" }).click();
   await addTasks(page, ["Milk", "Call mum"]);
@@ -112,7 +112,7 @@ test("drop a task on a list in the sidebar to move it there", async ({
 });
 
 test("drag lists around the sidebar and into a group", async ({ page }) => {
-  await page.goto("/");
+  await page.goto("/lists/inbox");
   await newList(page, "A");
   await newList(page, "B");
   const sidebar = page.getByRole("navigation", { name: "Lists" });

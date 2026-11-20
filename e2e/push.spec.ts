@@ -1,9 +1,9 @@
-import { expect, test } from "@playwright/test";
+import { expect, test } from "./fixtures.ts";
 
 test("a click on a push while Doozly is open goes to the task", async ({
   page,
 }) => {
-  await page.goto("/");
+  await page.goto("/lists/inbox");
   const add = page.getByRole("textbox", { name: "Add a task" });
   await add.fill("Call the dentist");
   await add.press("Enter");

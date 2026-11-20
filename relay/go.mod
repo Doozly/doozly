@@ -2,6 +2,8 @@ module doozly.app/relay
 
 go 1.26.10
 
+toolchain go1.26.11
+
 require (
 	github.com/SherClockHolmes/webpush-go v1.4.0
 	github.com/coreos/go-oidc/v3 v3.21.0

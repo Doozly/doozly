@@ -6,9 +6,15 @@ import { startTransition, useEffect, useState } from "react";
 import { Button } from "react-aria-components";
 import { useShallow } from "zustand/react/shallow";
 import { addDays, inMyDay, today } from "../../data/localDate.ts";
-import type { Task } from "../../data/model.ts";
+import {
+  INBOX_ID,
+  type List,
+  type ListGroup,
+  type Task,
+} from "../../data/model.ts";
 import { useActions, useAppState } from "../../state/AppContext.tsx";
 import { setting } from "../../state/actions.ts";
+import { byPosition } from "../../state/position.ts";
 import { ContextMenu, type MenuEntry } from "../../ui/ContextMenu.tsx";
 import { Icon } from "../../ui/Icon.tsx";
 import { animateRows } from "../../ui/motion.ts";
@@ -71,9 +77,11 @@ export function TaskList({ view }: { view: View }) {
     ),
   );
   const lists = useAppState((s) => s.lists);
+  const listGroups = useAppState((s) => s.groups);
   const progress = useAppState(useShallow(stepProgress));
   const starredFirst = useAppState((s) => setting(s, "moveStarredToTop"));
-  const { toggleImportant, toggleMyDay, updateTask, moveTask } = useActions();
+  const { toggleImportant, toggleMyDay, updateTask, moveTask, moveTaskToList } =
+    useActions();
   const setDue = (id: string, dueDate: string | null) =>
     updateTask(id, { dueDate });
   const folded = useUi((s) => s.completedFolded[view.id] ?? false);
@@ -198,16 +206,20 @@ export function TaskList({ view }: { view: View }) {
       <ContextMenu
         at={menu}
         label={`Actions for ${menu?.task.title ?? "task"}`}
-        items={menu ? taskMenu(menu.task) : []}
+        items={menu ? taskMenu(menu.task, sidebarOrder(lists, listGroups)) : []}
         onClose={() => setMenu(null)}
         onAction={(id) => {
           if (!menu) return;
           if (id === "toggle") toggle(menu.task);
           if (id === "delete") deleting.request(menu.task);
           const { task } = menu;
+          if (id.startsWith("move:")) {
+            animateRows(() => moveTaskToList(task.id, id.slice(5)));
+          }
           // In My Day or Planned these move the row, or take it out
           animateRows(() => {
             if (id === "myDay") toggleMyDay(task.id);
+            if (id === "important") toggleImportant(task.id);
             if (id === "dueToday") setDue(task.id, today());
             if (id === "dueTomorrow") setDue(task.id, addDays(today(), 1));
             if (id === "dueRemove") setDue(task.id, null);
@@ -240,12 +252,41 @@ function stepProgress(s: {
   return out;
 }
 
-function taskMenu(task: Task): MenuEntry[] {
+/** Live lists as the sidebar shows them: Tasks, then the rest with each group's lists in its place */
+function sidebarOrder(
+  lists: Record<string, List>,
+  groups: Record<string, ListGroup>,
+): List[] {
+  const live = Object.values(lists)
+    .filter((l) => l.deletedAt === null)
+    .sort(byPosition);
+  const top = [
+    ...live
+      .filter((l) => l.id !== INBOX_ID && l.groupId === null)
+      .map((l) => ({ id: l.id, position: l.position, lists: [l] })),
+    ...Object.values(groups)
+      .filter((g) => g.deletedAt === null)
+      .map((g) => ({
+        id: g.id,
+        position: g.position,
+        lists: live.filter((l) => l.groupId === g.id),
+      })),
+  ].sort(byPosition);
+  return [
+    ...live.filter((l) => l.id === INBOX_ID),
+    ...top.flatMap((entry) => entry.lists),
+  ];
+}
+
+function taskMenu(task: Task, lists: List[]): MenuEntry[] {
   const done = task.completedAt !== null;
   const entries: MenuEntry[] = [
     inMyDay(task)
       ? { id: "myDay", label: "Remove from My Day", icon: "myDay" }
       : { id: "myDay", label: "Add to My Day", icon: "myDay" },
+    task.important
+      ? { id: "important", label: "Remove importance", icon: "important" }
+      : { id: "important", label: "Mark as important", icon: "important" },
     {
       id: "toggle",
       label: done ? "Mark as not completed" : "Mark as completed",
@@ -256,6 +297,20 @@ function taskMenu(task: Task): MenuEntry[] {
   ];
   if (task.dueDate) {
     entries.push({ id: "dueRemove", label: "Remove due date", icon: "close" });
+  }
+  const others = lists.filter((l) => l.id !== task.listId);
+  if (others.length > 0) {
+    entries.push({
+      id: "move",
+      label: "Move task to...",
+      icon: "list",
+      separated: true,
+      children: others.map((l) => ({
+        id: `move:${l.id}`,
+        label: l.title,
+        icon: l.id === INBOX_ID ? "tasks" : "list",
+      })),
+    });
   }
   entries.push({
     id: "delete",

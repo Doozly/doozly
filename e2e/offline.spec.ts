@@ -1,4 +1,4 @@
-import { expect, test } from "@playwright/test";
+import { expect, test } from "./fixtures.ts";
 
 // Service workers in Playwright are reliable in Chromium only
 test.skip(({ browserName }) => browserName !== "chromium", "Chromium only");
@@ -7,7 +7,7 @@ test("after one visit the app opens and works offline", async ({
   page,
   context,
 }) => {
-  await page.goto("/");
+  await page.goto("/lists/inbox");
   await expect(page.getByRole("textbox", { name: "Add a task" })).toBeVisible();
   // The worker has precached everything once it's in control
   await page.evaluate(async () => {

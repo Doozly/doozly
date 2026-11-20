@@ -1,4 +1,4 @@
-import { expect, test } from "@playwright/test";
+import { expect, test } from "./fixtures.ts";
 import { waitForStored } from "./helpers.ts";
 
 test("a reminder set for later today shows up when it's time", async ({
@@ -11,7 +11,7 @@ test("a reminder set for later today shows up when it's time", async ({
   // Thursday 19 November 2026, just before noon. The clock runs on from here,
   // so Later today is 15:00 for the next two minutes.
   await page.clock.install({ time: new Date(2026, 10, 19, 11, 58) });
-  await page.goto("/");
+  await page.goto("/lists/inbox");
   const add = page.getByRole("textbox", { name: "Add a task" });
   await add.fill("Call the dentist");
   await add.press("Enter");

@@ -25,7 +25,7 @@ afterEach(() => {
 async function openTask(
   fields: { dueDate?: string; repeat?: RepeatRule } = {},
 ) {
-  const app = await renderApp("/", (a) =>
+  const app = await renderApp("/lists/inbox", (a) =>
     a.addTask(INBOX_ID, "Bins out", fields),
   );
   await userEvent.click(screen.getByRole("link", { name: "Bins out" }));

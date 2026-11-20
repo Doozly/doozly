@@ -44,7 +44,7 @@ afterEach(() => {
 });
 
 async function openTask(reminderAt: number | null = null) {
-  const app = await renderApp("/", (a) =>
+  const app = await renderApp("/lists/inbox", (a) =>
     a.addTask(INBOX_ID, "Call the dentist", { reminderAt }),
   );
   await userEvent.click(screen.getByRole("link", { name: "Call the dentist" }));

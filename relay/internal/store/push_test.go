@@ -2,6 +2,7 @@ package store
 
 import (
 	"context"
+	"fmt"
 	"path/filepath"
 	"testing"
 	"time"
@@ -46,6 +47,34 @@ func TestSubscriptions(t *testing.T) {
 	for _, u := range []string{"u1", "u2"} {
 		if subs, _ := s.Subscriptions(ctx, u); len(subs) != 0 {
 			t.Errorf("%s still has %+v", u, subs)
+		}
+	}
+}
+
+func TestSubscriptionsCapped(t *testing.T) {
+	ctx := context.Background()
+	s := open(t)
+	put := func(n int, at int64) {
+		t.Helper()
+		sub := Subscription{Endpoint: fmt.Sprintf("https://push/%d", n), UserID: "u1", P256dh: "k", Auth: "a"}
+		if err := s.PutSubscription(ctx, sub, time.Unix(at, 0)); err != nil {
+			t.Fatal(err)
+		}
+	}
+	for n := range MaxSubscriptions {
+		put(n, int64(1000+n))
+	}
+	// The oldest device checks in again, so the next one pushes out number 1 instead
+	put(0, 2000)
+	put(MaxSubscriptions, 2001)
+
+	subs, _ := s.Subscriptions(ctx, "u1")
+	if len(subs) != MaxSubscriptions {
+		t.Fatalf("u1 has %d subscriptions", len(subs))
+	}
+	for _, sub := range subs {
+		if sub.Endpoint == "https://push/1" {
+			t.Error("the longest quiet device is still there")
 		}
 	}
 }

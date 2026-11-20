@@ -72,7 +72,7 @@ test("a task typed into Planned is due today and lands in Tasks", async () => {
 });
 
 test("the sidebar counts open tasks with a due date", async () => {
-  await renderApp("/", (a) => {
+  await renderApp("/lists/inbox", (a) => {
     a.addTask(INBOX_ID, "One", { dueDate: "2026-11-19" });
     a.addTask(INBOX_ID, "Two", { dueDate: "2026-11-30" });
     a.addTask(INBOX_ID, "Three");

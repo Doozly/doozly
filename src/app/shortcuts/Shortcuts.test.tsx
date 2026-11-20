@@ -28,7 +28,7 @@ const task = (t: Awaited<ReturnType<typeof renderApp>>, title: string) =>
   );
 
 test("N goes to Add a task, and there N is just a letter", async () => {
-  await renderApp("/", seed);
+  await renderApp("/lists/inbox", seed);
   await userEvent.keyboard("n");
   const add = screen.getByRole("textbox", { name: "Add a task" });
   expect(add).toHaveFocus();
@@ -37,7 +37,7 @@ test("N goes to Add a task, and there N is just a letter", async () => {
 });
 
 test("D, T and S act on the task with the focus", async () => {
-  const t = await renderApp("/", seed);
+  const t = await renderApp("/lists/inbox", seed);
   row("Bread").focus();
   await userEvent.keyboard("s");
   expect(task(t, "Bread")?.important).toBe(true);
@@ -49,7 +49,7 @@ test("D, T and S act on the task with the focus", async () => {
 });
 
 test("without a focused row they act on the task open in the details", async () => {
-  const t = await renderApp("/", seed);
+  const t = await renderApp("/lists/inbox", seed);
   const eggs = task(t, "Eggs");
   if (!eggs) throw new Error("no eggs");
   await userEvent.click(row("Eggs"));
@@ -59,7 +59,7 @@ test("without a focused row they act on the task open in the details", async () 
 });
 
 test("Delete asks first, then the focus moves to the next task", async () => {
-  const t = await renderApp("/", seed);
+  const t = await renderApp("/lists/inbox", seed);
   row("Milk").focus();
   await userEvent.keyboard("{Delete}");
   const ask = screen.getByRole("alertdialog");
@@ -71,7 +71,7 @@ test("Delete asks first, then the focus moves to the next task", async () => {
 });
 
 test("L makes a new list and puts its name up for editing", async () => {
-  const { at } = await renderApp("/", seed);
+  const { at } = await renderApp("/lists/inbox", seed);
   await userEvent.keyboard("l");
   const name = screen.getByRole("textbox", { name: "List name" });
   expect(name).toHaveFocus();
@@ -80,7 +80,7 @@ test("L makes a new list and puts its name up for editing", async () => {
 });
 
 test("F and / go to search", async () => {
-  await renderApp("/", seed);
+  await renderApp("/lists/inbox", seed);
   const search = screen.getByRole("searchbox", { name: "Search" });
   await userEvent.keyboard("f");
   expect(search).toHaveFocus();
@@ -90,7 +90,7 @@ test("F and / go to search", async () => {
 });
 
 test("1 hides and shows the sidebar", async () => {
-  await renderApp("/", seed);
+  await renderApp("/lists/inbox", seed);
   await userEvent.keyboard("1");
   expect(screen.queryByRole("navigation", { name: "Lists" })).toBeNull();
   await userEvent.keyboard("1");
@@ -98,7 +98,7 @@ test("1 hides and shows the sidebar", async () => {
 });
 
 test("R syncs when someone is signed in", async () => {
-  const { session } = await renderApp("/", seed, (app) => {
+  const { session } = await renderApp("/lists/inbox", seed, (app) => {
     const s = createSession({ app, auths: {} });
     vi.spyOn(s, "syncNow");
     return s;
@@ -108,7 +108,7 @@ test("R syncs when someone is signed in", async () => {
 });
 
 test("? shows the shortcuts, Escape closes them", async () => {
-  await renderApp("/", seed);
+  await renderApp("/lists/inbox", seed);
   await userEvent.keyboard("?");
   const help = await screen.findByRole("dialog", {
     name: "Keyboard shortcuts",
@@ -122,7 +122,7 @@ test("? shows the shortcuts, Escape closes them", async () => {
 });
 
 test("arrows move between tasks and between lists", async () => {
-  const t = await renderApp("/", (a) => {
+  const t = await renderApp("/lists/inbox", (a) => {
     seed(a);
     a.addList("Work");
   });
@@ -155,7 +155,7 @@ test("arrows move between tasks and between lists", async () => {
 });
 
 test("Escape closes the details and goes back to the task's row", async () => {
-  const { at } = await renderApp("/", seed);
+  const { at } = await renderApp("/lists/inbox", seed);
   await userEvent.click(row("Bread"));
   expect(
     screen.getByRole("complementary", { name: "Task details" }),
@@ -172,7 +172,7 @@ test("Escape closes the details and goes back to the task's row", async () => {
 });
 
 test("with the setting off, letters are just letters, Delete still works", async () => {
-  const t = await renderApp("/", (a) => {
+  const t = await renderApp("/lists/inbox", (a) => {
     seed(a);
     a.setSetting("keyboardShortcuts", false);
     a.setSetting("confirmBeforeDelete", false);
@@ -186,7 +186,7 @@ test("with the setting off, letters are just letters, Delete still works", async
 });
 
 test("Settings can turn them off and show the list", async () => {
-  const t = await renderApp("/", seed);
+  const t = await renderApp("/lists/inbox", seed);
   await userEvent.click(screen.getByRole("button", { name: "Settings" }));
   const panel = await screen.findByRole("dialog", { name: "Settings" });
   await userEvent.click(

@@ -40,7 +40,7 @@ test("an empty or blank task is not added", async () => {
 });
 
 test("ticking a task moves it to Completed and plays the chime", async () => {
-  await renderApp("/", (a) => {
+  await renderApp("/lists/inbox", (a) => {
     a.addTask(INBOX_ID, "Buy milk");
     a.addTask(INBOX_ID, "Call mum");
   });
@@ -58,7 +58,7 @@ test("ticking a task moves it to Completed and plays the chime", async () => {
 });
 
 test("no chime when that setting is off", async () => {
-  await renderApp("/", (a) => {
+  await renderApp("/lists/inbox", (a) => {
     a.setSetting("playCompletionSound", false);
     a.addTask(INBOX_ID, "Buy milk");
   });
@@ -67,7 +67,7 @@ test("no chime when that setting is off", async () => {
 });
 
 test("unticking brings it back", async () => {
-  await renderApp("/", (a) => {
+  await renderApp("/lists/inbox", (a) => {
     const t = a.addTask(INBOX_ID, "Buy milk");
     if (t) a.toggleCompleted(t.id);
   });
@@ -77,7 +77,7 @@ test("unticking brings it back", async () => {
 });
 
 test("the Completed section folds away and back", async () => {
-  await renderApp("/", (a) => {
+  await renderApp("/lists/inbox", (a) => {
     const t = a.addTask(INBOX_ID, "Buy milk");
     if (t) a.toggleCompleted(t.id);
   });
@@ -91,7 +91,7 @@ test("the Completed section folds away and back", async () => {
 });
 
 test("lists set to hide completed tasks don't show the section", async () => {
-  await renderApp("/", (a) => {
+  await renderApp("/lists/inbox", (a) => {
     a.updateList(INBOX_ID, { showCompleted: false });
     const t = a.addTask(INBOX_ID, "Buy milk");
     if (t) a.toggleCompleted(t.id);
@@ -101,7 +101,7 @@ test("lists set to hide completed tasks don't show the section", async () => {
 
 test("clicking a task opens its details", async () => {
   let id = "";
-  const { at } = await renderApp("/", (a) => {
+  const { at } = await renderApp("/lists/inbox", (a) => {
     id = a.addTask(INBOX_ID, "Buy milk")?.id ?? "";
   });
   await userEvent.click(screen.getByRole("link", { name: "Buy milk" }));
@@ -112,7 +112,7 @@ test("clicking a task opens its details", async () => {
 });
 
 test("delete from the context menu asks first, and Cancel keeps it", async () => {
-  await renderApp("/", (a) => a.addTask(INBOX_ID, "Buy milk"));
+  await renderApp("/lists/inbox", (a) => a.addTask(INBOX_ID, "Buy milk"));
   fireEvent.contextMenu(screen.getByRole("link", { name: "Buy milk" }));
   await userEvent.click(
     await screen.findByRole("menuitem", { name: "Delete task" }),
@@ -138,7 +138,7 @@ test("delete from the context menu asks first, and Cancel keeps it", async () =>
 });
 
 test("with confirming turned off, delete is immediate", async () => {
-  await renderApp("/", (a) => {
+  await renderApp("/lists/inbox", (a) => {
     a.setSetting("confirmBeforeDelete", false);
     a.addTask(INBOX_ID, "Buy milk");
   });
@@ -151,7 +151,7 @@ test("with confirming turned off, delete is immediate", async () => {
 });
 
 test("Shift+F10 opens the menu from the keyboard, and it can complete", async () => {
-  await renderApp("/", (a) => a.addTask(INBOX_ID, "Buy milk"));
+  await renderApp("/lists/inbox", (a) => a.addTask(INBOX_ID, "Buy milk"));
   screen.getByRole("link", { name: "Buy milk" }).focus();
   await userEvent.keyboard("{Shift>}{F10}{/Shift}");
   await userEvent.click(
@@ -165,15 +165,57 @@ test("Shift+F10 opens the menu from the keyboard, and it can complete", async ()
   ).toBeChecked();
 });
 
+test("the menu marks a task as important and takes it off again", async () => {
+  const { state } = await renderApp("/lists/inbox", (a) =>
+    a.addTask(INBOX_ID, "Buy milk"),
+  );
+  const row = screen.getByRole("link", { name: "Buy milk" });
+  fireEvent.contextMenu(row);
+  await userEvent.click(
+    await screen.findByRole("menuitem", { name: "Mark as important" }),
+  );
+  expect(Object.values(state().tasks)[0]?.important).toBe(true);
+  fireEvent.contextMenu(row);
+  await userEvent.click(
+    await screen.findByRole("menuitem", { name: "Remove importance" }),
+  );
+  expect(Object.values(state().tasks)[0]?.important).toBe(false);
+});
+
+test("the menu moves a task to another list", async () => {
+  const { state } = await renderApp("/lists/inbox", (a) => {
+    a.addList("Groceries");
+    a.addList("Work");
+    a.addTask(INBOX_ID, "Buy milk");
+  });
+  fireEvent.contextMenu(screen.getByRole("link", { name: "Buy milk" }));
+  await userEvent.click(
+    await screen.findByRole("menuitem", { name: "Move task to..." }),
+  );
+  const lists = await screen.findByRole("menu", { name: "Move task to..." });
+  // Not the list it's in already
+  expect(
+    within(lists)
+      .getAllByRole("menuitem")
+      .map((i) => i.textContent),
+  ).toEqual(["Groceries", "Work"]);
+  await userEvent.click(within(lists).getByRole("menuitem", { name: "Work" }));
+
+  const work = Object.values(state().lists).find((l) => l.title === "Work");
+  expect(Object.values(state().tasks)[0]?.listId).toBe(work?.id);
+  expect(screen.queryByRole("link", { name: "Buy milk" })).toBeNull();
+  expect(screen.queryByRole("menu")).toBeNull();
+});
+
 test("empty lists say so", async () => {
-  await renderApp("/", (a) => a.addList("Trip"));
+  await renderApp("/lists/inbox", (a) => a.addList("Trip"));
   expect(screen.getByText(/aren't in any of your lists/)).toBeVisible();
   await userEvent.click(screen.getByRole("link", { name: "Trip" }));
   expect(screen.getByText(/Nothing here yet/)).toBeVisible();
 });
 
 test("a long list paints its first rows, then every one arrives", async () => {
-  await renderApp("/", (a) => {
+  await renderApp("/lists/inbox", (a) => {
     for (let i = 0; i < 150; i++) a.addTask(INBOX_ID, `Task ${i}`);
     for (let i = 0; i < 3; i++) {
       const t = a.addTask(INBOX_ID, `Done ${i}`);

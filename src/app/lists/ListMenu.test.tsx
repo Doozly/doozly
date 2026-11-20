@@ -1,7 +1,6 @@
 import { fireEvent, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, expect, test } from "vitest";
-import { INBOX_ID } from "../../data/model.ts";
 import { renderApp } from "../../test/render.tsx";
 import { useUi } from "../uiStore.ts";
 
@@ -24,7 +23,7 @@ async function pick(item: string) {
 }
 
 test("rename from the sidebar menu edits the title in place", async () => {
-  await renderApp("/", (a) => a.addList("Groceries"));
+  await renderApp("/lists/inbox", (a) => a.addList("Groceries"));
   fireEvent.contextMenu(sidebarLink("Groceries"));
   await pick("Rename list");
 
@@ -38,7 +37,7 @@ test("rename from the sidebar menu edits the title in place", async () => {
 });
 
 test("clicking the title renames, Escape cancels, empty keeps the old name", async () => {
-  await renderApp("/", (a) => a.addList("Groceries"));
+  await renderApp("/lists/inbox", (a) => a.addList("Groceries"));
   await userEvent.click(sidebarLink("Groceries"));
 
   await userEvent.click(screen.getByRole("button", { name: "Groceries" }));
@@ -64,7 +63,7 @@ test("the Tasks list can't be renamed or deleted, only themed and duplicated", a
 });
 
 test("duplicate from the list options opens the copy with its tasks", async () => {
-  const { at } = await renderApp("/", (a) => {
+  const { at } = await renderApp("/lists/inbox", (a) => {
     const list = a.addList("Groceries");
     a.addTask(list.id, "Milk");
   });
@@ -79,7 +78,7 @@ test("duplicate from the list options opens the copy with its tasks", async () =
 });
 
 test("delete asks first; confirming removes the list and goes home", async () => {
-  const { at } = await renderApp("/", (a) => a.addList("Groceries"));
+  const { at } = await renderApp("/lists/inbox", (a) => a.addList("Groceries"));
   await userEvent.click(sidebarLink("Groceries"));
 
   fireEvent.contextMenu(sidebarLink("Groceries"));
@@ -101,11 +100,11 @@ test("delete asks first; confirming removes the list and goes home", async () =>
   expect(
     within(sidebar()).queryByRole("link", { name: "Groceries" }),
   ).toBeNull();
-  expect(at()).toBe(`/lists/${INBOX_ID}`);
+  expect(at()).toBe("/lists/my-day");
 });
 
 test("Shift+F10 on a sidebar list opens its menu", async () => {
-  await renderApp("/", (a) => a.addList("Groceries"));
+  await renderApp("/lists/inbox", (a) => a.addList("Groceries"));
   sidebarLink("Groceries").focus();
   await userEvent.keyboard("{Shift>}{F10}{/Shift}");
   expect(

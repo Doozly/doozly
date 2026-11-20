@@ -18,7 +18,7 @@ const linkNames = () =>
     .map((a) => a.textContent?.trim());
 
 test("smart lists, then Tasks, then the user's lists in order", async () => {
-  await renderApp("/", (a) => {
+  await renderApp("/lists/inbox", (a) => {
     a.addList("Groceries");
     a.addList("Holiday");
   });
@@ -34,7 +34,7 @@ test("smart lists, then Tasks, then the user's lists in order", async () => {
 });
 
 test("each list shows how many tasks are still open", async () => {
-  await renderApp("/", (a) => {
+  await renderApp("/lists/inbox", (a) => {
     const list = a.addList("Groceries");
     a.addTask(list.id, "Milk");
     const done = a.addTask(list.id, "Bread");
@@ -52,7 +52,7 @@ test("each list shows how many tasks are still open", async () => {
 });
 
 test("lists without open tasks show no number", async () => {
-  await renderApp("/", (a) => a.addList("Empty"));
+  await renderApp("/lists/inbox", (a) => a.addList("Empty"));
   expect(within(sidebar()).getByRole("link", { name: "Empty" })).toBeVisible();
 });
 

@@ -21,7 +21,7 @@ function seed(a: Actions) {
 const completed = () => screen.getByRole("list", { name: "Completed tasks" });
 
 test("ticking with Space keeps the focus on the task, now under Completed", async () => {
-  await renderApp("/", seed);
+  await renderApp("/lists/inbox", seed);
   screen.getByRole("checkbox", { name: "Bread" }).focus();
   await userEvent.keyboard(" ");
   const moved = within(completed()).getByRole("checkbox", { name: "Bread" });
@@ -33,7 +33,7 @@ test("ticking with Space keeps the focus on the task, now under Completed", asyn
 });
 
 test("D on a row keeps the focus on that row", async () => {
-  await renderApp("/", seed);
+  await renderApp("/lists/inbox", seed);
   screen.getByRole("link", { name: "Milk" }).focus();
   await userEvent.keyboard("d");
   expect(within(completed()).getByRole("link", { name: "Milk" })).toHaveFocus();
@@ -41,14 +41,21 @@ test("D on a row keeps the focus on that row", async () => {
 
 test("a row that leaves the list hands the focus to the next one", async () => {
   await renderApp("/lists/my-day", seed);
+  // My Day puts the newest first, and the three can be made a millisecond apart or not
+  const rows = screen
+    .getAllByRole("link")
+    .filter((l) => l.dataset.nav === "task")
+    .map((l) => l.textContent);
+  const at = rows.indexOf("Milk");
+  const next = rows[at + 1] ?? rows[at - 1] ?? "";
   screen.getByRole("link", { name: "Milk" }).focus();
   await userEvent.keyboard("t");
   expect(screen.queryByRole("link", { name: "Milk" })).toBeNull();
-  expect(screen.getByRole("link", { name: "Bread" })).toHaveFocus();
+  expect(screen.getByRole("link", { name: next })).toHaveFocus();
 });
 
 test("Enter opens the details and goes there, Escape comes back", async () => {
-  await renderApp("/", seed);
+  await renderApp("/lists/inbox", seed);
   screen.getByRole("link", { name: "Eggs" }).focus();
   await userEvent.keyboard("{Enter}");
   const pane = screen.getByRole("complementary", { name: "Task details" });
@@ -60,7 +67,7 @@ test("Enter opens the details and goes there, Escape comes back", async () => {
 });
 
 test("a click opens the details without taking the focus away", async () => {
-  await renderApp("/", seed);
+  await renderApp("/lists/inbox", seed);
   await userEvent.click(screen.getByRole("link", { name: "Eggs" }));
   expect(
     screen.getByRole("complementary", { name: "Task details" }),

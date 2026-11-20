@@ -1,4 +1,4 @@
-import { expect, type Page, test } from "@playwright/test";
+import { expect, type Page, test } from "./fixtures.ts";
 
 /** Records what gets animated: a task row by its title, "ghost" for a copy on its way out */
 async function watchAnimations(page: Page) {
@@ -37,7 +37,7 @@ const tick = (page: Page, title: string) =>
 test("completing, adding, deleting and closing the details animate", async ({
   page,
 }) => {
-  await page.goto("/");
+  await page.goto("/lists/inbox");
   await addTasks(page, "Milk", "Bread");
   await watchAnimations(page);
 
@@ -76,7 +76,7 @@ test("completing, adding, deleting and closing the details animate", async ({
 });
 
 test("ticking quickly loses no clicks while rows move", async ({ page }) => {
-  await page.goto("/");
+  await page.goto("/lists/inbox");
   await addTasks(page, "One", "Two", "Three");
   const done = page.getByRole("list", { name: "Completed tasks" });
   // Straight after each other, while the first row is still on its way down
@@ -88,7 +88,7 @@ test("ticking quickly loses no clicks while rows move", async ({ page }) => {
 
 test("reduced motion changes at once, nothing animates", async ({ page }) => {
   await page.emulateMedia({ reducedMotion: "reduce" });
-  await page.goto("/");
+  await page.goto("/lists/inbox");
   await addTasks(page, "Milk");
   await watchAnimations(page);
   await tick(page, "Milk");

@@ -63,7 +63,11 @@ test("without any sign-in set up there's no account button", async () => {
 
 test("sign in, see it's synced, sign out again", async () => {
   const auth = fakeAuth();
-  const { session } = await renderApp("/", undefined, withSession(auth));
+  const { session } = await renderApp(
+    "/lists/inbox",
+    undefined,
+    withSession(auth),
+  );
   await session?.start();
 
   let card = await openAccount(/sign in to sync/i);
@@ -104,7 +108,11 @@ test("a sign-in that ran out shows on the button and offers to sign in again", a
     }),
   );
   const auth = fakeAuth("1", "Sam");
-  const { session } = await renderApp("/", undefined, withSession(auth));
+  const { session } = await renderApp(
+    "/lists/inbox",
+    undefined,
+    withSession(auth),
+  );
   await session?.start();
 
   const card = await openAccount(/needs attention/);
@@ -130,7 +138,11 @@ test("closing the popup says nothing, other failures say why", async () => {
     .mockRejectedValueOnce(
       new SignInError("noDriveAccess", "Doozly needs access to its own folder"),
     );
-  const { session } = await renderApp("/", undefined, withSession(auth));
+  const { session } = await renderApp(
+    "/lists/inbox",
+    undefined,
+    withSession(auth),
+  );
   await session?.start();
   const card = await openAccount(/sign in to sync/i);
   const button = within(card).getByRole("button", {

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { Suspense, useState } from "react";
 import { useLocation } from "wouter";
 import { useShallow } from "zustand/react/shallow";
 import { INBOX_ID, type List, type ListGroup } from "../../data/model.ts";
@@ -6,9 +6,14 @@ import { useActions, useAppState } from "../../state/AppContext.tsx";
 import { byPosition } from "../../state/position.ts";
 import { ConfirmDialog } from "../../ui/ConfirmDialog.tsx";
 import { ContextMenu, type MenuEntry } from "../../ui/ContextMenu.tsx";
+import { preloadable } from "../../ui/preloadable.tsx";
 import { paths } from "../routes.ts";
 import { useUi } from "../uiStore.ts";
-import { ThemePicker } from "./ThemePicker.tsx";
+
+// Only there once someone picks "Change theme"
+export const ThemePicker = preloadable(() =>
+  import("./ThemePicker.tsx").then((m) => m.ThemePicker),
+);
 
 function entriesFor(list: List, groups: ListGroup[]): MenuEntry[] {
   const theme: MenuEntry = {
@@ -102,11 +107,15 @@ export function useListMenu({ onDone }: { onDone?: () => void } = {}) {
         onClose={() => setMenu(null)}
         onAction={(id) => menu && run(id, menu.list, menu)}
       />
-      <ThemePicker
-        listId={theming?.listId ?? null}
-        at={theming}
-        onClose={() => setTheming(null)}
-      />
+      {theming && (
+        <Suspense fallback={null}>
+          <ThemePicker
+            listId={theming.listId}
+            at={theming}
+            onClose={() => setTheming(null)}
+          />
+        </Suspense>
+      )}
       <ConfirmDialog
         isOpen={toDelete !== null}
         title={`Delete "${toDelete?.title ?? ""}"?`}

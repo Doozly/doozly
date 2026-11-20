@@ -1,5 +1,5 @@
 import AxeBuilder from "@axe-core/playwright";
-import { expect, type Page, test } from "@playwright/test";
+import { expect, type Page, test } from "./fixtures.ts";
 
 // Axe looks at the DOM and the computed styles, which don't differ between engines enough
 // to be worth three runs
@@ -51,7 +51,7 @@ for (const scheme of ["light", "dark"] as const) {
     page,
   }) => {
     await page.emulateMedia({ colorScheme: scheme });
-    await page.goto("/");
+    await page.goto("/lists/inbox");
     await seed(page);
     await check(page, "Tasks with open, done, starred, My Day and due tasks");
 
@@ -123,7 +123,7 @@ for (const scheme of ["light", "dark"] as const) {
 }
 
 test("a list with a theme and a background passes axe", async ({ page }) => {
-  await page.goto("/");
+  await page.goto("/lists/inbox");
   const lists = page.getByRole("navigation", { name: "Lists" });
   await lists.getByRole("textbox", { name: "New list" }).fill("Trips");
   await lists.getByRole("textbox", { name: "New list" }).press("Enter");
@@ -142,7 +142,7 @@ test("a list with a theme and a background passes axe", async ({ page }) => {
 
 test("the phone layout and its drawer pass axe", async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 800 });
-  await page.goto("/");
+  await page.goto("/lists/inbox");
   await page.getByRole("textbox", { name: "Add a task" }).fill("Milk");
   await page.getByRole("textbox", { name: "Add a task" }).press("Enter");
   await check(page, "phone list");

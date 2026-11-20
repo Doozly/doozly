@@ -17,7 +17,7 @@ beforeEach(() => {
 
 /** "Shop" in Tasks with the given steps, opened in the detail pane */
 async function openShop(steps: string[] = []) {
-  const app = await renderApp("/", (a: Actions) => {
+  const app = await renderApp("/lists/inbox", (a: Actions) => {
     const task = a.addTask(INBOX_ID, "Shop");
     for (const s of steps) if (task) a.addStep(task.id, s);
   });

@@ -95,8 +95,12 @@ func sessionCookieOf(t *testing.T, w *httptest.ResponseRecorder) *http.Cookie {
 
 func TestHealthz(t *testing.T) {
 	h, _ := setup(t)
-	if w := do(h, req{method: "GET", path: "/healthz"}); w.Code != 200 || !strings.Contains(w.Body.String(), `"ok"`) {
+	w := do(h, req{method: "GET", path: "/healthz"})
+	if w.Code != 200 || !strings.Contains(w.Body.String(), `"ok"`) {
 		t.Errorf("%d %s", w.Code, w.Body)
+	}
+	if w.Header().Get("X-Content-Type-Options") != "nosniff" || w.Header().Get("Cache-Control") != "no-store" {
+		t.Errorf("headers %v", w.Header())
 	}
 	broken := New(Options{Store: fakeStore{err: errors.New("disk")}, Log: slog.New(slog.NewTextHandler(io.Discard, nil))})
 	if w := do(broken, req{method: "GET", path: "/healthz"}); w.Code != 503 {

@@ -1,4 +1,4 @@
-import { expect, test } from "@playwright/test";
+import { expect, test } from "./fixtures.ts";
 
 test("search across lists, open a result, then go back", async ({ page }) => {
   await page.goto("/lists/inbox");

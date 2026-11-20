@@ -1,4 +1,4 @@
-import { expect, test } from "@playwright/test";
+import { expect, test } from "./fixtures.ts";
 import { waitForStored } from "./helpers.ts";
 
 test("a custom repeat survives a reload and moves on when ticked off", async ({
@@ -6,7 +6,7 @@ test("a custom repeat survives a reload and moves on when ticked off", async ({
 }) => {
   // Thursday 19 November 2026
   await page.clock.setFixedTime(new Date(2026, 10, 19, 12));
-  await page.goto("/");
+  await page.goto("/lists/inbox");
   const add = page.getByRole("textbox", { name: "Add a task" });
   await add.fill("Bins out");
   await add.press("Enter");

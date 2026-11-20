@@ -90,7 +90,7 @@ test("Suggestions offers yesterday's and due tasks, one tap adds them", async ()
 });
 
 test("My Day comes first in the sidebar, with its count", async () => {
-  await renderApp("/", (a) =>
+  await renderApp("/lists/inbox", (a) =>
     a.addTask(INBOX_ID, "Call mum", { myDay: "2026-11-19" }),
   );
   const first = within(screen.getByRole("navigation", { name: "Lists" }))

@@ -1,8 +1,8 @@
-import { expect, test } from "@playwright/test";
+import { expect, test } from "./fixtures.ts";
 import { taskStored, waitForStored } from "./helpers.ts";
 
 test("add, complete and delete a task", async ({ page }) => {
-  await page.goto("/");
+  await page.goto("/lists/inbox");
   const add = page.getByRole("textbox", { name: "Add a task" });
   await add.fill("Buy milk");
   await add.press("Enter");
@@ -56,7 +56,7 @@ test("add, complete and delete a task", async ({ page }) => {
 });
 
 test("the detail pane edits the title as you type", async ({ page }) => {
-  await page.goto("/");
+  await page.goto("/lists/inbox");
   const add = page.getByRole("textbox", { name: "Add a task" });
   await add.fill("Buy milk");
   await add.press("Enter");
@@ -90,7 +90,7 @@ test("the detail pane edits the title as you type", async ({ page }) => {
 });
 
 test("a due date from the calendar sticks", async ({ page }) => {
-  await page.goto("/");
+  await page.goto("/lists/inbox");
   const add = page.getByRole("textbox", { name: "Add a task" });
   await add.fill("Pay rent");
   await add.press("Enter");

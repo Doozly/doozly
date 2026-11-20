@@ -21,15 +21,34 @@ type Reminder struct {
 	Payload []byte
 }
 
+// A user's devices are capped, so nobody can make one reminder fan out to thousands of pushes
+const MaxSubscriptions = 20
+
 // PutSubscription adds a device, or moves it to another user when the endpoint is known already.
+// Beyond MaxSubscriptions the devices that checked in longest ago go.
 func (s *Store) PutSubscription(ctx context.Context, sub Subscription, now time.Time) error {
-	_, err := s.DB.ExecContext(ctx, `
+	tx, err := s.DB.BeginTx(ctx, nil)
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback()
+	if _, err := tx.ExecContext(ctx, `
 		INSERT INTO subscriptions (endpoint, user_id, p256dh, auth, created_at)
 		VALUES (?, ?, ?, ?, ?)
 		ON CONFLICT (endpoint) DO UPDATE SET
-			user_id = excluded.user_id, p256dh = excluded.p256dh, auth = excluded.auth`,
-		sub.Endpoint, sub.UserID, sub.P256dh, sub.Auth, now.Unix())
-	return err
+			user_id = excluded.user_id, p256dh = excluded.p256dh, auth = excluded.auth,
+			created_at = excluded.created_at`,
+		sub.Endpoint, sub.UserID, sub.P256dh, sub.Auth, now.Unix()); err != nil {
+		return err
+	}
+	if _, err := tx.ExecContext(ctx, `
+		DELETE FROM subscriptions WHERE user_id = ? AND endpoint NOT IN (
+			SELECT endpoint FROM subscriptions WHERE user_id = ?
+			ORDER BY created_at DESC, rowid DESC LIMIT ?)`,
+		sub.UserID, sub.UserID, MaxSubscriptions); err != nil {
+		return err
+	}
+	return tx.Commit()
 }
 
 // DeleteSubscription removes a device, but only the user's own.

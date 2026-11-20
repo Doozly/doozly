@@ -222,3 +222,26 @@ func TestVAPIDSendsAnEncryptedSignedPush(t *testing.T) {
 		t.Error("the body went out in clear")
 	}
 }
+
+func TestVAPIDFollowsNoRedirects(t *testing.T) {
+	elsewhere := false
+	other := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		elsewhere = true
+	}))
+	defer other.Close()
+	service := httptest.NewServer(http.RedirectHandler(other.URL, http.StatusTemporaryRedirect))
+	defer service.Close()
+
+	private, public, _ := webpush.GenerateVAPIDKeys()
+	browser, _ := ecdh.P256().GenerateKey(rand.Reader)
+	sub := store.Subscription{
+		Endpoint: service.URL + "/send/abc",
+		P256dh:   base64.RawURLEncoding.EncodeToString(browser.PublicKey().Bytes()),
+		Auth:     base64.RawURLEncoding.EncodeToString(make([]byte, 16)),
+	}
+	v := VAPID{PublicKey: public, PrivateKey: private, Subject: "mailto:hello@doozly.app"}
+	status, err := v.Send(context.Background(), sub, []byte(`{"id":"r"}`), time.Minute)
+	if err != nil || status != http.StatusTemporaryRedirect || elsewhere {
+		t.Errorf("status %d, err %v, followed %v", status, err, elsewhere)
+	}
+}

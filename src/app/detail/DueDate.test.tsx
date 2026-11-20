@@ -28,7 +28,7 @@ afterEach(() => {
 });
 
 async function openTask(dueDate: string | null = null) {
-  const app = await renderApp("/", (a) =>
+  const app = await renderApp("/lists/inbox", (a) =>
     a.addTask(INBOX_ID, "Pay rent", { dueDate }),
   );
   await userEvent.click(screen.getByRole("link", { name: "Pay rent" }));

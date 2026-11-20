@@ -1,4 +1,4 @@
-import { expect, test } from "@playwright/test";
+import { expect, test } from "./fixtures.ts";
 import { settingStored, taskStored, waitForStored } from "./helpers.ts";
 
 // The whole phase 1 flow in one go, the way someone would actually use it
@@ -6,7 +6,7 @@ test("phase 1 journey: lists, tasks, persistence, theme and the phone drawer", a
   page,
 }) => {
   await page.emulateMedia({ colorScheme: "light" });
-  await page.goto("/");
+  await page.goto("/lists/inbox");
   const lists = page.getByRole("navigation", { name: "Lists" });
   const title = page.getByRole("heading", { level: 1 });
   await expect(title).toHaveText("Tasks");

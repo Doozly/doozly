@@ -24,7 +24,9 @@ test("export downloads everything as a dated JSON file", async () => {
     .spyOn(HTMLAnchorElement.prototype, "click")
     .mockImplementation(() => {});
 
-  await renderApp("/", (actions) => actions.addTask(INBOX_ID, "Milk"));
+  await renderApp("/lists/inbox", (actions) =>
+    actions.addTask(INBOX_ID, "Milk"),
+  );
   await openSettings();
   await userEvent.click(screen.getByRole("button", { name: "Export" }));
 
@@ -36,7 +38,7 @@ test("export downloads everything as a dated JSON file", async () => {
 });
 
 test("import merges a file in and says what came", async () => {
-  const other = await renderApp("/", (actions) => {
+  const other = await renderApp("/lists/inbox", (actions) => {
     const list = actions.addList("Groceries");
     actions.addTask(list.id, "Bread");
   });

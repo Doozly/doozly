@@ -95,7 +95,7 @@ test("a task opened from a smart list keeps the smart list around it", async () 
 });
 
 test("the sidebar counts open tasks in the smart lists", async () => {
-  await renderApp("/", seed);
+  await renderApp("/lists/inbox", seed);
   expect(
     within(sidebar()).getByRole("link", { name: "Important 2 open tasks" }),
   ).toBeVisible();

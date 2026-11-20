@@ -7,10 +7,13 @@
 
 .popover {
   min-width: 220px;
+  max-width: 360px;
   padding: var(--space-1) 0;
   border-radius: var(--radius-lg);
   background: var(--color-surface);
   box-shadow: var(--shadow-medium);
+  /* React Aria caps the height to what fits, a long list of lists scrolls */
+  overflow-y: auto;
 }
 
 .popover[data-entering] {
@@ -33,7 +36,15 @@
   outline: none;
 }
 
-.item[data-focused] {
+.label {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.item[data-focused],
+.item[data-open] {
   background: var(--color-surface-hover);
 }
 
