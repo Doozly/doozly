@@ -3,7 +3,10 @@ import { createRoot } from "react-dom/client";
 import { App } from "./App.tsx";
 import { SessionProvider } from "./app/account/SessionContext.tsx";
 import { listenForInstall } from "./app/pwa/install.ts";
-import { registerServiceWorker } from "./app/pwa/serviceWorker.ts";
+import {
+  registerServiceWorker,
+  watchDesktopUpdates,
+} from "./app/pwa/serviceWorker.ts";
 import { openDb } from "./data/db.ts";
 import { isDesktop } from "./platform.ts";
 import { AppProvider } from "./state/AppContext.tsx";
@@ -33,6 +36,7 @@ async function start(root: HTMLElement) {
     const app = createApp(db);
     await app.load();
     registerServiceWorker();
+    if (isDesktop()) watchDesktopUpdates();
 
     const actions = createActions(app);
     const reactRoot = createRoot(root);

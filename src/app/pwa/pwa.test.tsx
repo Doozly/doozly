@@ -36,7 +36,7 @@ beforeEach(() => {
     value: container,
     configurable: true,
   });
-  updates.setState({ waiting: null });
+  updates.setState({ waiting: null, desktop: null });
   install.setState({ offer: null });
 });
 

@@ -1,12 +1,17 @@
 import { createStore } from "zustand/vanilla";
-import { isDesktop } from "../../platform.ts";
+import { isDesktop, loadTauri, onDesktopEvent } from "../../platform.ts";
 
 interface UpdateState {
   /** A new version, installed and waiting for the user to reload */
   waiting: ServiceWorker | null;
+  /** In the desktop app: the version that's downloaded and waits for a restart */
+  desktop: string | null;
 }
 
-export const updates = createStore<UpdateState>()(() => ({ waiting: null }));
+export const updates = createStore<UpdateState>()(() => ({
+  waiting: null,
+  desktop: null,
+}));
 
 const HOUR = 60 * 60 * 1000;
 
@@ -49,4 +54,21 @@ export function applyUpdate() {
     { once: true },
   );
   worker.postMessage({ type: "SKIP_WAITING" });
+}
+
+/** In the desktop app the Rust side checks and downloads, here we only hear that it's ready */
+export function watchDesktopUpdates() {
+  const ready = (version: string | null) =>
+    updates.setState({ desktop: version });
+  onDesktopEvent<string>("doozly:update", ready);
+  // It may have been ready before this window was listening
+  void loadTauri()
+    .then(({ invoke }) => invoke<string | null>("update_ready"))
+    .then(ready, () => {});
+}
+
+/** Installs the downloaded version and starts it */
+export async function installDesktopUpdate() {
+  const { invoke } = await loadTauri();
+  await invoke("install_update");
 }
