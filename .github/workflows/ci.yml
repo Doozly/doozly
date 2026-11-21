@@ -115,6 +115,13 @@ jobs:
       - run: pnpm tauri build --debug --no-bundle
       - if: runner.os == 'Linux'
         run: dbus-run-session -- xvfb-run --auto-servernum node --test "e2e-desktop/*.test.ts"
+      # A crash at start looks the same to the driver as a driver problem, so first see that it stays up
+      - if: runner.os == 'Windows'
+        run: |
+          $p = Start-Process src-tauri\target\debug\doozly.exe -PassThru -RedirectStandardError app-err.txt -RedirectStandardOutput app-out.txt
+          Start-Sleep 15
+          if ($p.HasExited) { echo "Exited with $($p.ExitCode)" } else { echo "Still running"; Stop-Process $p.Id }
+          Get-Content app-out.txt, app-err.txt
       # The driver has to match the WebView2 runtime, not Edge, so fetch the one for its version
       - if: runner.os == 'Windows'
         run: |
