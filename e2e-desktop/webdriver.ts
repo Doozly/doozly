@@ -5,7 +5,7 @@ import { setTimeout as sleep } from "node:timers/promises";
 // to WebKitWebDriver on Linux and msedgedriver on Windows.
 const PORT = 4444;
 const BASE = `http://127.0.0.1:${PORT}`;
-const ELEMENT = "element-6066-11e4-a52f-4f735466cecf";
+const ELEMENT = "element-6066-11e4-a52e-4f735466cecf";
 
 export const KEYS = { enter: "", alt: "", down: "" };
 
