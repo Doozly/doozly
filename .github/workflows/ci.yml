@@ -34,6 +34,10 @@ jobs:
 
   e2e:
     runs-on: ubuntu-latest
+    # Like a dev's .env.local, so the account button is there. Not the relay, tests mustn't reach the real one.
+    env:
+      VITE_GOOGLE_CLIENT_ID: ${{ vars.VITE_GOOGLE_CLIENT_ID }}
+      VITE_MICROSOFT_CLIENT_ID: ${{ vars.VITE_MICROSOFT_CLIENT_ID }}
     steps:
       - uses: actions/checkout@v7
       - uses: pnpm/action-setup@v6
