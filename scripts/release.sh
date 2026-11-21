@@ -16,7 +16,8 @@ if ! grep -q '^## Unreleased' CHANGELOG.md || [ "$(sed -n '/^## Unreleased/,/^##
   exit 1
 fi
 
-pnpm version "$version" --no-git-tag-version >/dev/null
+# The first release is the version that's there already
+pnpm version "$version" --no-git-tag-version --allow-same-version >/dev/null
 # GNU sed, only the package's own version, the first one in the file
 sed -i "0,/^version = .*/s//version = \"$version\"/" src-tauri/Cargo.toml
 (cd src-tauri && cargo update -p doozly --offline -q)
