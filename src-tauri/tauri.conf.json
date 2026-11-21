@@ -1,7 +1,7 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
   "productName": "Doozly",
-  "version": "0.1.0",
+  "version": "../package.json",
   "identifier": "app.doozly.desktop",
   "build": {
     "frontendDist": "../dist",
@@ -52,6 +52,15 @@
       "icons/128x128@2x.png",
       "icons/icon.icns",
       "icons/icon.ico"
-    ]
+    ],
+    "createUpdaterArtifacts": true
+  },
+  "plugins": {
+    "updater": {
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDZBRDkzMjk3NkE3MzJFODcKUldTSExuTnFsekxaYXM4U1grcGNoT3FuL0FGSVJuUjg3VzR4eWlOM3I3STZoQS9ONGtjdDY1dUoK",
+      "endpoints": [
+        "https://github.com/Doozly/doozly/releases/latest/download/latest.json"
+      ]
+    }
   }
 }

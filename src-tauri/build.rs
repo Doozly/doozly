@@ -7,6 +7,8 @@ fn main() {
         "set_open_at_login",
         "set_quick_add",
         "close_quick_add",
+        "update_ready",
+        "install_update",
     ]);
     tauri_build::try_build(tauri_build::Attributes::new().app_manifest(manifest))
         .expect("tauri-build failed");

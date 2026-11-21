@@ -1,6 +1,7 @@
 mod desktop;
 mod quick;
 mod reminders;
+mod update;
 
 use std::sync::Arc;
 use std::thread;
@@ -67,6 +68,7 @@ pub fn run() {
                 .build(),
         )
         .plugin(quick::plugin())
+        .plugin(tauri_plugin_updater::Builder::new().build())
         .invoke_handler(tauri::generate_handler![
             set_reminders,
             desktop::desktop_settings,
@@ -74,6 +76,8 @@ pub fn run() {
             desktop::set_open_at_login,
             desktop::set_quick_add,
             quick::close_quick_add,
+            update::update_ready,
+            update::install_update,
         ])
         .on_window_event(|window, event| {
             desktop::on_window_event(window, event);
@@ -101,6 +105,7 @@ pub fn run() {
             app.manage(scheduler.clone());
             let handle = app.handle().clone();
             thread::spawn(move || scheduler.run(|r| notify(&handle, r)));
+            update::start(app.handle());
 
             if !std::env::args().any(|a| a == HIDDEN) {
                 desktop::show(app.handle());
