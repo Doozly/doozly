@@ -3,8 +3,10 @@ import { waitForStored } from "./helpers.ts";
 import { bigExport } from "./perf-seed.ts";
 
 // Timings in CI wobble a lot, so the limits are generous. They catch a list that got slow, not a few ms.
-const INSTANT_MS = 200;
-const SMOOTH_MS = 500;
+// GitHub's runners are also about half as quick as a dev machine, so there they get double.
+const SLOWER = process.env.CI ? 2 : 1;
+const INSTANT_MS = 200 * SLOWER;
+const SMOOTH_MS = 500 * SLOWER;
 
 test.skip(
   ({ browserName }) => browserName !== "chromium",
