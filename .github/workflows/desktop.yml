@@ -51,14 +51,30 @@ jobs:
           workspaces: src-tauri
           key: ${{ matrix.args }}
       - run: pnpm install --frozen-lockfile
+      # The release notes, also what the update offer in the app shows
+      - name: Notes from CHANGELOG.md
+        if: startsWith(github.ref, 'refs/tags/')
+        shell: bash
+        run: |
+          version=${GITHUB_REF_NAME#v}
+          test "$(node -p 'require("./package.json").version')" = "$version" || {
+            echo "The tag says $version but package.json doesn't, use scripts/release.sh"; exit 1; }
+          awk -v v="## $version " 'index($0, v) == 1 {on=1; next} /^## / {on=0} on' CHANGELOG.md > notes.md
+          test -s notes.md || { echo "CHANGELOG.md has no notes for $version"; exit 1; }
+          { echo 'notes<<EOF'; cat notes.md; echo EOF; } >> "$GITHUB_ENV"
       - uses: tauri-apps/tauri-action@v1.0.0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # Signs the update bundles, so an app only takes updates that came from us
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
         with:
           tauriScript: pnpm tauri
           args: ${{ matrix.args }}
           # A tag makes a draft release to check before it goes out, a manual run only artifacts
           tagName: ${{ startsWith(github.ref, 'refs/tags/') && github.ref_name || '' }}
           releaseName: Doozly ${{ github.ref_name }}
+          releaseBody: ${{ env.notes }}
           releaseDraft: true
+          uploadUpdaterJson: true
           uploadWorkflowArtifacts: true
