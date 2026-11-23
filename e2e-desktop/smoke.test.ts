@@ -112,5 +112,6 @@ test("the window won't leave the app for a web page", async () => {
   await s.run("location.href = 'https://example.invalid/'; return null");
   await new Promise((r) => setTimeout(r, 1500));
   assert.equal(await s.run<string>("return location.origin"), home);
-  await s.byText("h1", "My Day");
+  // Still the app, on whichever list the tests before left it
+  await s.find("css selector", "main h1");
 });
