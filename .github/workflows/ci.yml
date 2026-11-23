@@ -1,9 +1,10 @@
 name: CI
 
+# Only for a release tag or by hand, to save the minutes
 on:
   push:
-    branches: [main, master]
-  pull_request:
+    tags: ["v*"]
+  workflow_dispatch:
 
 permissions:
   contents: read
