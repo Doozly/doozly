@@ -104,6 +104,45 @@ jobs:
       - working-directory: src-tauri
         run: cargo test
 
+  # The app's own self-test (src-tauri/src/smoke.rs) in each system's real webview. No WebDriver
+  # needed, so it covers WebView2 and WKWebView too. The exit code is the result.
+  desktop-smoke:
+    needs: on-main
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v7
+      - if: runner.os == 'Linux'
+        run: sudo apt-get update && sudo apt-get install -y libwebkit2gtk-4.1-dev libxdo-dev libayatana-appindicator3-dev librsvg2-dev libssl-dev xvfb
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: pnpm
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2.9.3
+        with:
+          workspaces: src-tauri
+          key: smoke
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm tauri build --debug --no-bundle --features smoke
+      - if: runner.os == 'Linux'
+        run: |
+          # WebKitGTK's sandbox needs user namespaces, which Ubuntu's AppArmor holds back on runners
+          sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
+          dbus-run-session -- xvfb-run --auto-servernum src-tauri/target/debug/doozly
+      - if: runner.os == 'macOS'
+        run: src-tauri/target/debug/doozly
+      - if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $p = Start-Process src-tauri\target\debug\doozly.exe -NoNewWindow -Wait -PassThru
+          exit $p.ExitCode
+
   # The SPA in the real WebKitGTK webview. Windows' msedgedriver doesn't get a session with
   # WebView2 yet (DevToolsActivePort), and macOS has no WebDriver for WKWebView at all.
   desktop-e2e:
