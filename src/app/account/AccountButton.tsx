@@ -1,4 +1,3 @@
-import { useState } from "react";
 import {
   Button,
   Dialog,
@@ -8,13 +7,12 @@ import {
 } from "react-aria-components";
 import { useShallow } from "zustand/shallow";
 import { unsubscribePush } from "../../reminders/push.ts";
-import { SignInError } from "../../sync/provider.ts";
-import type { Account, ProviderKind } from "../../sync/session.ts";
-import { ConfirmDialog } from "../../ui/ConfirmDialog.tsx";
+import type { Account } from "../../sync/session.ts";
 import { Icon } from "../../ui/Icon.tsx";
 import { useRelay } from "../reminders/useRelay.ts";
 import styles from "./AccountButton.module.css";
 import { useSession, useSessionState } from "./SessionContext.tsx";
+import { type ConfirmMerge, useConfirmMerge, useSignIn } from "./signIn.tsx";
 import { providerNames, storageNames, syncMessage } from "./syncMessage.ts";
 
 const initials = (name: string) =>
@@ -25,36 +23,14 @@ const initials = (name: string) =>
     .map((w) => w[0]?.toUpperCase())
     .join("") || "?";
 
-function failureText(err: unknown): string | null {
-  if (err instanceof SignInError) {
-    if (err.reason === "cancelled") return null;
-    if (err.reason === "noDriveAccess") return err.message;
-  }
-  return "Couldn't sign in. Check your connection and try again.";
-}
-
 /** The account in the header: sign in, see how sync is doing, sign out */
 export function AccountButton() {
   const session = useSession();
   const account = useSessionState((s) => s.account);
   const attention = useSessionState((s) => syncMessage(s)?.attention ?? false);
-  const [merge, setMerge] = useState<{
-    account: Account;
-    answer: (ok: boolean) => void;
-  } | null>(null);
+  const { confirmMerge, dialog } = useConfirmMerge();
 
   if (!session || session.providers.length === 0) return null;
-
-  const confirmMerge = (next: Account) =>
-    new Promise<boolean>((resolve) => {
-      setMerge({
-        account: next,
-        answer: (ok) => {
-          setMerge(null);
-          resolve(ok);
-        },
-      });
-    });
 
   return (
     <>
@@ -90,35 +66,12 @@ export function AccountButton() {
           </Dialog>
         </Popover>
       </DialogTrigger>
-      <ConfirmDialog
-        isOpen={merge !== null}
-        title="Add this device's tasks?"
-        message={`This device has tasks from another account. Add them to ${merge?.account.email ?? "this account"} and sync them to its ${merge ? storageNames[merge.account.provider] : "storage"}?`}
-        confirmLabel="Add them"
-        tone="accent"
-        onConfirm={() => merge?.answer(true)}
-        onCancel={() => merge?.answer(false)}
-      />
+      {dialog}
     </>
   );
 }
 
-type Confirm = (account: Account) => Promise<boolean>;
-
-function useSignIn(confirmMerge: Confirm) {
-  const session = useSession();
-  const signingIn = useSessionState((s) => s.signingIn);
-  const [error, setError] = useState<string | null>(null);
-  const signIn = (kind: ProviderKind) => {
-    setError(null);
-    session?.signIn(kind, confirmMerge).catch((err: unknown) => {
-      setError(failureText(err));
-    });
-  };
-  return { signIn, signingIn, error };
-}
-
-function SignedOut({ confirmMerge }: { confirmMerge: Confirm }) {
+function SignedOut({ confirmMerge }: { confirmMerge: ConfirmMerge }) {
   const session = useSession();
   const { signIn, signingIn, error } = useSignIn(confirmMerge);
   return (
@@ -156,7 +109,7 @@ function SignedIn({
   confirmMerge,
 }: {
   account: Account;
-  confirmMerge: Confirm;
+  confirmMerge: ConfirmMerge;
 }) {
   const session = useSession();
   const relay = useRelay();
