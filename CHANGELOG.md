@@ -4,6 +4,11 @@ What's new in each desktop release. The web app updates itself and isn't version
 
 ## Unreleased
 
+- Print a list, or email it, from the list's menu.
+- The GitHub, privacy and terms links in Settings open in your browser. Links never open inside the Doozly window.
+- On Linux the quick add box is a slim bar, like on the other systems, not a tall box.
+- For organisations: a policy file that switches off the updater and sets the defaults, and a .pkg for Mac management tools. The guide is at https://doozly.app/admin.
+
 ## 0.1.0 (2026-11-23)
 
 - First desktop app for Linux, macOS and Windows: native reminders, the tray, open at login, To Do's keyboard shortcuts and a quick add box (Ctrl+Alt+N, or ⌥⌘N on a Mac).
