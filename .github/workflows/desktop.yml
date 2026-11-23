@@ -17,6 +17,9 @@ env:
   VITE_GOOGLE_CLIENT_ID: ${{ vars.VITE_GOOGLE_CLIENT_ID }}
   VITE_MICROSOFT_CLIENT_ID: ${{ vars.VITE_MICROSOFT_CLIENT_ID }}
   VITE_RELAY_URL: ${{ vars.VITE_RELAY_URL }}
+  # Desktop sign-in, only the Rust build reads these (src-tauri/build.rs)
+  GOOGLE_DESKTOP_CLIENT_ID: ${{ vars.GOOGLE_DESKTOP_CLIENT_ID }}
+  GOOGLE_DESKTOP_CLIENT_SECRET: ${{ secrets.GOOGLE_DESKTOP_CLIENT_SECRET }}
 
 jobs:
   # A tag can sit on any branch, the trigger doesnt know. A release from there would go out to everyone.

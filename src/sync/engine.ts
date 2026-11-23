@@ -53,6 +53,10 @@ export interface SyncStatus {
   /** Files waiting to be pushed */
   pending: number;
   error: string | null;
+  /** While a round moves files: which way, and how far. null otherwise. */
+  direction: "down" | "up" | null;
+  done: number;
+  total: number;
 }
 
 interface EngineOptions {
@@ -130,7 +134,11 @@ export function createSyncEngine({
     lastSyncedAt: null,
     pending: 0,
     error: null,
+    direction: null,
+    done: 0,
+    total: 0,
   }));
+  const idle = { direction: null, done: 0, total: 0 } as const;
   const etags = new Map<string, string>();
   // Path to a change count, so a push only clears the changes it actually sent
   const dirty = new Map<string, number>();
@@ -233,8 +241,11 @@ export function createSyncEngine({
   async function pullPaths(paths: string[]) {
     const remote = emptySnapshot();
     const seen: { path: string; data: Uint8Array }[] = [];
-    for (const path of paths.filter(isOurFile)) {
+    const ours = paths.filter(isOurFile);
+    status.setState({ direction: "down", done: 0, total: ours.length });
+    for (const [i, path] of ours.entries()) {
       const got = await read(path);
+      status.setState({ done: i + 1 });
       if (!got) continue;
       remote.lists.push(...got.snapshot.lists);
       remote.groups.push(...got.snapshot.groups);
@@ -299,10 +310,12 @@ export function createSyncEngine({
   }
 
   async function pushAll() {
-    for (const [path, version] of [...dirty]) {
+    const todo = [...dirty];
+    status.setState({ direction: "up", done: 0, total: todo.length });
+    for (const [i, [path, version]] of todo.entries()) {
       await pushOne(path);
       if (dirty.get(path) === version) dirty.delete(path);
-      status.setState({ pending: dirty.size });
+      status.setState({ pending: dirty.size, done: i + 1 });
     }
   }
 
@@ -333,7 +346,7 @@ export function createSyncEngine({
   function run(job: () => Promise<void>): Promise<void> {
     const next = queue.then(async () => {
       if (blocked) return;
-      status.setState({ phase: "syncing" });
+      status.setState({ phase: "syncing", ...idle });
       try {
         await job();
         retryDelay = 0;
@@ -343,8 +356,10 @@ export function createSyncEngine({
           lastSyncedAt: now(),
           pending: dirty.size,
           error: null,
+          ...idle,
         });
       } catch (err) {
+        status.setState(idle);
         fail(err);
       }
     });

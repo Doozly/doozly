@@ -299,3 +299,38 @@ test("an account without storage stops sync with its own phase", async () => {
   await a.sync();
   expect(cloud.calls.changesSince).toBe(1);
 });
+
+test("progress counts the files of each direction, and clears when the round ends", async () => {
+  const cloud = createMemoryProvider();
+  const a = await device("a", cloud);
+  a.actions.addTask(INBOX_ID, "Milk");
+  a.actions.addList("Shopping");
+  await a.sync();
+
+  const b = await device("b", cloud);
+  const seen: string[] = [];
+  b.engine.status.subscribe((s) => {
+    const now = s.direction && `${s.direction} ${s.done}/${s.total}`;
+    // Other fields change too (pending), only count steps in progress
+    if (now && now !== seen.at(-1)) seen.push(now);
+  });
+  await b.sync();
+
+  // A new device downloads all four files one by one, then sends its own back up
+  expect(seen.filter((s) => s.startsWith("down"))).toEqual([
+    "down 0/4",
+    "down 1/4",
+    "down 2/4",
+    "down 3/4",
+    "down 4/4",
+  ]);
+  const up = seen.filter((s) => s.startsWith("up"));
+  expect(up[0]).toMatch(/^up 0\//);
+  expect(up.at(-1)).toMatch(/^up (\d+)\/\1$/);
+  expect(b.engine.status.getState()).toMatchObject({
+    phase: "idle",
+    direction: null,
+    done: 0,
+    total: 0,
+  });
+});

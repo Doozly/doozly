@@ -1,3 +1,4 @@
+mod auth;
 mod desktop;
 mod quick;
 mod reminders;
@@ -68,6 +69,8 @@ pub fn run() {
                 .build(),
         )
         .plugin(quick::plugin())
+        .plugin(tauri_plugin_opener::init())
+        .manage(auth::Auth::new(Arc::new(auth::Keychain::default())))
         .plugin(tauri_plugin_updater::Builder::new().build())
         .invoke_handler(tauri::generate_handler![
             set_reminders,
@@ -78,6 +81,11 @@ pub fn run() {
             quick::close_quick_add,
             update::update_ready,
             update::install_update,
+            auth::sign_in,
+            auth::access_token,
+            auth::drop_access_token,
+            auth::restored_account,
+            auth::sign_out,
         ])
         .on_window_event(|window, event| {
             desktop::on_window_event(window, event);

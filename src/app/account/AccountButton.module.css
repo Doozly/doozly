@@ -44,6 +44,45 @@
   font: var(--font-subtitle);
 }
 
+/* Around the avatar while a sync takes a moment */
+.ring {
+  position: absolute;
+  /* Outside the avatar with a gap, or it looks like a blurry edge */
+  inset: -3px;
+  border: 2px solid transparent;
+  border-top-color: var(--color-on-header);
+  border-right-color: var(--color-on-header);
+  border-radius: var(--radius-round);
+  animation: spin 0.9s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ring {
+    animation: none;
+  }
+}
+
+.progress {
+  overflow: hidden;
+  height: 4px;
+  border-radius: var(--radius-round);
+  background: var(--color-border);
+}
+
+.progressFill {
+  display: block;
+  height: 100%;
+  background: var(--accent);
+  transform-origin: left;
+  transition: transform var(--duration-normal) var(--ease-standard);
+}
+
 .badge {
   position: absolute;
   top: 2px;

@@ -83,12 +83,13 @@ export function ListPane({ view, onShowSidebar }: ListPaneProps) {
           </div>
         )}
         {view.id === "my-day" && (
-          <IconButton
-            icon="suggestions"
-            label="Suggestions"
-            className={styles.end}
-            onPress={() => setSuggesting(true)}
-          />
+          <div className={styles.end}>
+            <IconButton
+              icon="suggestions"
+              label="Suggestions"
+              onPress={() => setSuggesting(true)}
+            />
+          </div>
         )}
       </div>
       {view.subtitle && <p className={styles.subtitle}>{view.subtitle}</p>}

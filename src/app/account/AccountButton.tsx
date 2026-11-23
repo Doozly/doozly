@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import {
   Button,
   Dialog,
@@ -24,11 +25,29 @@ const initials = (name: string) =>
     .map((w) => w[0]?.toUpperCase())
     .join("") || "?";
 
+/** True once `on` has held for `ms`, so a quick sync doesn't blink */
+function useAfter(on: boolean, ms: number) {
+  const [late, setLate] = useState(false);
+  useEffect(() => {
+    if (!on) return;
+    const timer = setTimeout(() => setLate(true), ms);
+    return () => {
+      clearTimeout(timer);
+      setLate(false);
+    };
+  }, [on, ms]);
+  return on && late;
+}
+
 /** The account in the header: sign in, see how sync is doing, sign out */
 export function AccountButton() {
   const session = useSession();
   const account = useSessionState((s) => s.account);
   const attention = useSessionState((s) => syncMessage(s)?.attention ?? false);
+  const syncing = useAfter(
+    useSessionState((s) => s.sync?.phase === "syncing"),
+    500,
+  );
   const { confirmMerge, dialog } = useConfirmMerge();
 
   if (!session || session.providers.length === 0) return null;
@@ -44,7 +63,7 @@ export function AccountButton() {
           className={styles.trigger}
           aria-label={
             account
-              ? `Account and sync, signed in as ${account.name}${attention ? ", needs attention" : ""}`
+              ? `Account and sync, signed in as ${account.name}${attention ? ", needs attention" : syncing ? ", syncing" : ""}`
               : "Sign in to sync"
           }
         >
@@ -55,6 +74,7 @@ export function AccountButton() {
           ) : (
             <Icon name="account" />
           )}
+          {syncing && <span className={styles.ring} aria-hidden />}
           {attention && <span className={styles.badge} aria-hidden />}
         </Button>
         <Popover placement="bottom end" className={styles.popover}>
@@ -138,6 +158,24 @@ function SignedIn({
           <span>{message.text}</span>
         </p>
       )}
+      {message?.total ? (
+        // By hand: React Aria's ProgressBar would land in the first load's shared chunk
+        <div
+          role="progressbar"
+          aria-label="Sync progress"
+          aria-valuemin={0}
+          aria-valuemax={message.total}
+          aria-valuenow={message.done}
+          className={styles.progress}
+        >
+          <span
+            className={styles.progressFill}
+            style={{
+              transform: `scaleX(${(message.done ?? 0) / message.total})`,
+            }}
+          />
+        </div>
+      ) : null}
       {message?.action === "signIn" && (
         <Button
           className={styles.primary}

@@ -218,6 +218,9 @@ export function createSession({
               lastSyncedAt: null,
               pending: 0,
               error: null,
+              direction: null,
+              done: 0,
+              total: 0,
             },
           });
           return;

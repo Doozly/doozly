@@ -9,7 +9,15 @@ const state = (
   pending = 0,
 ): SessionState => ({
   account: { provider: "microsoft", id: "1", email: "a@b.c", name: "A" },
-  sync: phase && { phase, lastSyncedAt: null, pending, error: null },
+  sync: phase && {
+    phase,
+    lastSyncedAt: null,
+    pending,
+    error: null,
+    direction: null,
+    done: 0,
+    total: 0,
+  },
   elsewhere: false,
   signingIn: null,
   ...extra,
@@ -53,4 +61,26 @@ test("every phase has words, and only real trouble asks for attention", () => {
   expect(syncMessage(state(null, { elsewhere: true }))?.text).toBe(
     "Syncing in another Doozly tab.",
   );
+});
+
+test("while files move it says which way and how far", () => {
+  const moving = (direction: "down" | "up", done: number, total: number) => {
+    const s = state("syncing");
+    return syncMessage({
+      ...s,
+      sync: s.sync && { ...s.sync, direction, done, total },
+    });
+  };
+  expect(moving("down", 4, 12)).toMatchObject({
+    text: "Downloading from OneDrive, 4 of 12…",
+    done: 4,
+    total: 12,
+  });
+  expect(moving("up", 0, 2)?.text).toBe("Uploading to OneDrive, 0 of 2…");
+  // Nothing to move this round: no numbers, no bar
+  expect(moving("down", 0, 0)).toEqual({
+    icon: "sync",
+    text: "Syncing…",
+    attention: false,
+  });
 });

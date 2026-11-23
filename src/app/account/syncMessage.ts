@@ -17,6 +17,9 @@ export interface SyncMessage {
   /** Something's wrong that the user should see on the account button too */
   attention: boolean;
   action?: "signIn" | "reload";
+  /** Set while files move, for a progress bar */
+  done?: number;
+  total?: number;
 }
 
 const waiting = (n: number) =>
@@ -37,8 +40,21 @@ export function syncMessage(s: SessionState): SyncMessage | null {
   switch (sync?.phase) {
     case undefined:
     case "off":
-    case "syncing":
       return { icon: "sync", text: "Syncing…", attention: false };
+    case "syncing": {
+      if (!sync.direction || sync.total === 0) {
+        return { icon: "sync", text: "Syncing…", attention: false };
+      }
+      const way =
+        sync.direction === "down" ? "Downloading from" : "Uploading to";
+      return {
+        icon: "sync",
+        text: `${way} ${where}, ${sync.done} of ${sync.total}…`,
+        attention: false,
+        done: sync.done,
+        total: sync.total,
+      };
+    }
     case "idle":
       return {
         icon: "synced",

@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-drop-access-token"
+description = "Enables the drop_access_token command without any pre-configured scope."
+commands.allow = ["drop_access_token"]
+
+[[permission]]
+identifier = "deny-drop-access-token"
+description = "Denies the drop_access_token command without any pre-configured scope."
+commands.deny = ["drop_access_token"]

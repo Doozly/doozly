@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-restored-account"
+description = "Enables the restored_account command without any pre-configured scope."
+commands.allow = ["restored_account"]
+
+[[permission]]
+identifier = "deny-restored-account"
+description = "Denies the restored_account command without any pre-configured scope."
+commands.deny = ["restored_account"]

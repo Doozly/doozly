@@ -1,4 +1,4 @@
-import { screen, waitFor, within } from "@testing-library/react";
+import { act, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, expect, test, vi } from "vitest";
 import { INBOX_ID } from "../../data/model.ts";
@@ -176,4 +176,53 @@ test("another account's tasks on this device need a yes before they go along", a
   await userEvent.click(within(ask).getByRole("button", { name: "Cancel" }));
   await waitFor(() => expect(auth.signOut).toHaveBeenCalled());
   expect(session?.state.getState().account).toBeNull();
+});
+
+test("a sync that takes a moment shows on the button, and the popover says how far it got", async () => {
+  const { session } = await renderApp(
+    "/lists/inbox",
+    undefined,
+    withSession(fakeAuth()),
+  );
+  await session?.start();
+  await userEvent.click(
+    await within(await openAccount(/sign in to sync/i)).findByRole("button", {
+      name: "Sign in with Google",
+    }),
+  );
+  await screen.findByText("Up to date with Google Drive.");
+
+  const syncing = (done: number, total: number) =>
+    act(() =>
+      session?.state.setState({
+        sync: {
+          phase: "syncing",
+          lastSyncedAt: null,
+          pending: 0,
+          error: null,
+          direction: "down",
+          done,
+          total,
+        },
+      }),
+    );
+  syncing(4, 12);
+  expect(
+    screen.getByText("Downloading from Google Drive, 4 of 12…"),
+  ).toBeInTheDocument();
+  const bar = screen.getByRole("progressbar", { name: "Sync progress" });
+  expect(bar).toHaveAttribute("aria-valuenow", "4");
+  expect(bar).toHaveAttribute("aria-valuemax", "12");
+
+  // The button only says so once it's been going for half a second
+  expect(
+    screen.queryByRole("button", { name: /, syncing$/, hidden: true }),
+  ).not.toBeInTheDocument();
+  expect(
+    await screen.findByRole(
+      "button",
+      { name: /signed in as Sam Taylor, syncing$/, hidden: true },
+      { timeout: 2000 },
+    ),
+  ).toBeInTheDocument();
 });

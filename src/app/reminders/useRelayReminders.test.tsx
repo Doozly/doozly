@@ -28,7 +28,15 @@ async function setup(lastSyncedAt: number | null) {
   const t = await testApp();
   const state = createStore<SessionState>()(() => ({
     account: { provider: "google", id: "1", email: "", name: "" },
-    sync: { phase: "idle", lastSyncedAt, pending: 0, error: null },
+    sync: {
+      phase: "idle",
+      lastSyncedAt,
+      pending: 0,
+      error: null,
+      direction: null,
+      done: 0,
+      total: 0,
+    },
     elsewhere: false,
     signingIn: null,
   }));
@@ -76,7 +84,15 @@ test("nothing before the first pull, so no second key gets made", async () => {
 
   act(() => {
     state.setState({
-      sync: { phase: "idle", lastSyncedAt: 1, pending: 0, error: null },
+      sync: {
+        phase: "idle",
+        lastSyncedAt: 1,
+        pending: 0,
+        error: null,
+        direction: null,
+        done: 0,
+        total: 0,
+      },
     });
   });
   await waitFor(() => expect(puts).toHaveLength(1));
