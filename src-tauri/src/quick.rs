@@ -43,7 +43,10 @@ fn toggle(app: &AppHandle) {
             let made = WebviewWindowBuilder::new(app, LABEL, WebviewUrl::App("quick-add".into()))
                 .title("Add a task")
                 .inner_size(560.0, 64.0)
-                .resizable(false)
+                // Not resizable(false): GTK then fixes the window to the webview's natural
+                // size, 200 high. Same min and max keep it from resizing all the same.
+                .min_inner_size(560.0, 64.0)
+                .max_inner_size(560.0, 64.0)
                 .decorations(false)
                 .always_on_top(true)
                 .skip_taskbar(true)
