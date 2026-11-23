@@ -14,6 +14,18 @@ Lists, My Day, Important and Planned, steps, notes, due dates, reminders and rep
   <img src=".github/screenshots/phone.png" alt="My Day on a phone" width="24%">
 </p>
 
+## Desktop app
+
+Download it from the [latest release](https://github.com/Doozly/doozly/releases/latest). After that it updates itself.
+
+The installers are not code signed, so the first start shows a warning once:
+
+- **Windows:** "Windows protected your PC". Click "More info", then "Run anyway".
+- **macOS:** Doozly can't be opened because Apple can't check it. Open System Settings, then Privacy & Security, scroll down and click "Open Anyway" next to Doozly.
+- **Linux:** no warning. For the AppImage, make it executable first (`chmod +x`).
+
+Updates are signed with the project's own key, so the app only installs real releases from this repository.
+
 ## Requirements
 
 - Node.js 24 or later
