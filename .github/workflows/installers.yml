@@ -1,0 +1,101 @@
+name: Installers
+
+# Silent install, upgrade and uninstall of published installers, on clean runners, like an
+# organisation would roll them out. By hand only, macOS minutes are expensive.
+on:
+  workflow_dispatch:
+    inputs:
+      from:
+        description: Release to install first, like v0.1.0 (empty to skip the upgrade)
+        required: false
+      to:
+        description: Release to upgrade to, like v0.1.1
+        required: true
+
+permissions:
+  contents: read
+
+env:
+  GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  FROM: ${{ inputs.from }}
+  TO: ${{ inputs.to }}
+
+jobs:
+  linux:
+    runs-on: ubuntu-22.04
+    steps:
+      - name: deb with apt
+        run: |
+          set -e
+          get() { gh release download "$1" -R "$GITHUB_REPOSITORY" -p '*.deb' -D "deb-$1"; }
+          if [ -n "$FROM" ]; then
+            get "$FROM"
+            sudo DEBIAN_FRONTEND=noninteractive apt-get install -y ./deb-"$FROM"/*.deb
+          fi
+          get "$TO"
+          sudo DEBIAN_FRONTEND=noninteractive apt-get install -y ./deb-"$TO"/*.deb
+          test "$(dpkg-query -W -f='${Version}' doozly)" = "${TO#v}"
+          test -x /usr/bin/doozly
+          sudo apt-get remove -y doozly
+          test ! -e /usr/bin/doozly
+      - name: rpm with dnf
+        run: |
+          set -e
+          get() { gh release download "$1" -R "$GITHUB_REPOSITORY" -p '*.rpm' -D "rpm-$1"; }
+          [ -z "$FROM" ] || get "$FROM"
+          get "$TO"
+          docker run --rm -v "$PWD:/w" -w /w -e FROM -e TO fedora:41 sh -ec '
+            [ -z "$FROM" ] || dnf install -y rpm-"$FROM"/*.rpm
+            dnf install -y rpm-"$TO"/*.rpm
+            test "$(rpm -q --qf "%{VERSION}" doozly)" = "${TO#v}"
+            test -x /usr/bin/doozly
+            dnf remove -y doozly
+            test ! -e /usr/bin/doozly'
+
+  windows:
+    runs-on: windows-latest
+    steps:
+      - name: msi with msiexec
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = "Stop"
+          function Get-Msi($tag) {
+            gh release download $tag -R $env:GITHUB_REPOSITORY -p '*.msi' -D "msi-$tag"
+            (Get-ChildItem "msi-$tag\*.msi").FullName
+          }
+          function Invoke-Msi($arguments) {
+            $p = Start-Process msiexec.exe -ArgumentList $arguments -Wait -PassThru
+            # 3010 is "done, restart wanted", fine for us
+            if ($p.ExitCode -notin 0, 3010) { throw "msiexec $arguments exited $($p.ExitCode)" }
+          }
+          if ($env:FROM) { Invoke-Msi "/i `"$(Get-Msi $env:FROM)`" /qn /norestart" }
+          $msi = Get-Msi $env:TO
+          Invoke-Msi "/i `"$msi`" /qn /norestart /l*v install.log"
+          $entry = Get-ItemProperty "HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall\*" |
+            Where-Object DisplayName -eq "Doozly"
+          if (@($entry).Count -ne 1) { throw "expected one Doozly in Programs, found $(@($entry).Count)" }
+          if ($entry.DisplayVersion -ne $env:TO.TrimStart("v")) { throw "installed $($entry.DisplayVersion)" }
+          $exe = Join-Path $env:ProgramFiles "Doozly\doozly.exe"
+          if (-not (Test-Path $exe)) { throw "no $exe" }
+          if (Get-Process doozly -ErrorAction SilentlyContinue) { throw "it started by itself after install" }
+          Invoke-Msi "/x `"$msi`" /qn /norestart"
+          if (Test-Path $exe) { throw "still there after uninstall" }
+
+  macos:
+    runs-on: macos-latest
+    steps:
+      - name: pkg with installer
+        run: |
+          set -e
+          get() { gh release download "$1" -R "$GITHUB_REPOSITORY" -p '*_aarch64.pkg' -D "pkg-$1"; }
+          if [ -n "$FROM" ] && get "$FROM"; then
+            sudo installer -pkg pkg-"$FROM"/*.pkg -target /
+          fi
+          get "$TO"
+          sudo installer -pkg pkg-"$TO"/*.pkg -target /
+          plist=/Applications/Doozly.app/Contents/Info.plist
+          test "$(defaults read "$plist" CFBundleShortVersionString)" = "${TO#v}"
+          # Installed by root through MDM there's no quarantine, so Gatekeeper doesn't stop it
+          test -z "$(xattr -p com.apple.quarantine /Applications/Doozly.app 2>/dev/null)"
+          sudo rm -rf /Applications/Doozly.app
+          sudo pkgutil --forget app.doozly.desktop
