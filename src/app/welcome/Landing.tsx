@@ -1,6 +1,5 @@
 import { useEffect } from "react";
 import { Button } from "react-aria-components";
-import type { ProviderKind } from "../../sync/session.ts";
 import { Logo } from "../../ui/Logo.tsx";
 import { ProviderButton } from "../account/ProviderButton.tsx";
 import { useSession } from "../account/SessionContext.tsx";
@@ -8,14 +7,11 @@ import { useConfirmMerge, useSignIn } from "../account/signIn.tsx";
 import { storageNames } from "../account/syncMessage.ts";
 import styles from "./Landing.module.css";
 
-// Microsoft first, most people come here from To Do
-const order: ProviderKind[] = ["microsoft", "google"];
-
 export function Landing({ onDone }: { onDone: () => void }) {
   const session = useSession();
   const { confirmMerge, dialog } = useConfirmMerge();
   const { signIn, signingIn, error } = useSignIn(confirmMerge, onDone);
-  const providers = order.filter((k) => session?.providers.includes(k));
+  const providers = session?.providers ?? [];
 
   useEffect(() => {
     document.title = "Doozly - simple to-do lists, kept on your own drive";

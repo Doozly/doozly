@@ -82,7 +82,7 @@ function SignedOut({ confirmMerge }: { confirmMerge: ConfirmMerge }) {
       </Heading>
       <p className={styles.text}>
         Sign in to back up your lists and see them on all your devices. They're
-        kept in your own Google Drive or OneDrive, in a folder only Doozly uses.
+        kept in your own OneDrive or Google Drive, in a folder only Doozly uses.
       </p>
       {session?.providers.map((kind) => (
         <ProviderButton

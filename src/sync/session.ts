@@ -196,8 +196,8 @@ export function createSession({
 
   return {
     state,
-    /** The sign-ins that are set up, in the order to offer them */
-    providers: (["google", "microsoft"] as const).filter((k) => auths[k]),
+    /** The sign-ins that are set up, in the order to offer them. Microsoft first, most people come from To Do. */
+    providers: (["microsoft", "google"] as const).filter((k) => auths[k]),
 
     /** Picks up the account from last time and starts syncing if it can */
     async start() {
