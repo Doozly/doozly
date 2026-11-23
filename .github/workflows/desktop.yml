@@ -92,3 +92,24 @@ jobs:
           releaseDraft: true
           uploadUpdaterJson: true
           uploadWorkflowArtifacts: true
+      # For MDM tools (Jamf, Kandji, Munki), which install a pkg without asking. Unsigned like the rest.
+      - name: A pkg for managed Macs
+        if: runner.os == 'macOS' && startsWith(github.ref, 'refs/tags/')
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          case "${{ matrix.args }}" in
+            *aarch64*) target=aarch64-apple-darwin arch=aarch64 ;;
+            *) target=x86_64-apple-darwin arch=x64 ;;
+          esac
+          version=${GITHUB_REF_NAME#v}
+          pkg="Doozly_${version}_${arch}.pkg"
+          mkdir -p root/Applications
+          cp -R "src-tauri/target/$target/release/bundle/macos/Doozly.app" root/Applications/
+          # Else the installer may "update" a copy of the app somewhere else instead of /Applications
+          pkgbuild --analyze --root root components.plist
+          plutil -replace 0.BundleIsRelocatable -bool NO components.plist
+          pkgbuild --root root --component-plist components.plist --identifier app.doozly.desktop \
+            --version "$version" --install-location / "$pkg"
+          gh release upload "$GITHUB_REF_NAME" "$pkg" --clobber
