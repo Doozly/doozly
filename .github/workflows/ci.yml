@@ -1,6 +1,6 @@
 name: CI
 
-# Only for a release tag or by hand, to save the minutes
+# Only for a release tag on main or by hand, to save the minutes
 on:
   push:
     tags: ["v*"]
@@ -17,7 +17,16 @@ env:
   SKIP_INSTALL_SIMPLE_GIT_HOOKS: "1"
 
 jobs:
+  # A tag can sit on any branch, the trigger doesnt know. Same for a run by hand.
+  on-main:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - run: git merge-base --is-ancestor "$GITHUB_SHA" origin/main
   check:
+    needs: on-main
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
@@ -34,6 +43,7 @@ jobs:
       - run: pnpm size
 
   e2e:
+    needs: on-main
     runs-on: ubuntu-latest
     # Like a dev's .env.local, so the account button is there. Not the relay, tests mustn't reach the real one.
     env:
@@ -57,6 +67,7 @@ jobs:
           retention-days: 14
 
   relay:
+    needs: on-main
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -74,6 +85,7 @@ jobs:
       - run: go run golang.org/x/vuln/cmd/govulncheck@v1.10.0 ./...
 
   desktop:
+    needs: on-main
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
@@ -94,6 +106,7 @@ jobs:
   # The SPA in the real WebKitGTK webview. Windows' msedgedriver doesn't get a session with
   # WebView2 yet (DevToolsActivePort), and macOS has no WebDriver for WKWebView at all.
   desktop-e2e:
+    needs: on-main
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:

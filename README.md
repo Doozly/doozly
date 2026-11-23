@@ -56,4 +56,4 @@ React 19 and TypeScript on Vite, with the React Compiler. Biome for linting and 
 
 `pnpm install` sets up a pre-commit hook that runs Biome on staged files and a full typecheck. If you keep a personal hook of your own, put it in `.git/hooks/pre-commit.local` and make it executable. It runs before the project checks.
 
-CI runs the typecheck, lint, unit tests, build and end-to-end tests when a `v*` tag is pushed, or by hand from the Actions tab (`gh workflow run CI`).
+CI runs the typecheck, lint, unit tests, build and end-to-end tests when a `v*` tag on main is pushed, or by hand on main from the Actions tab (`gh workflow run CI`).
