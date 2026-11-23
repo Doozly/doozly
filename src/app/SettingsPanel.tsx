@@ -121,7 +121,7 @@ function SettingsForm() {
 
       <DataSection />
 
-      {/* Desktop can't open links outside the app yet, it would load GitHub in its own window */}
+      {/* Desktop can't open links outside the app yet, it would load them in its own window */}
       {!isDesktop() && (
         <footer className={styles.about}>
           <a
@@ -131,7 +131,12 @@ function SettingsForm() {
           >
             Doozly on GitHub
           </a>
-          <span>Free and open source</span>
+          <a href="/privacy" target="_blank" rel="noreferrer">
+            Privacy
+          </a>
+          <a href="/terms" target="_blank" rel="noreferrer">
+            Terms
+          </a>
         </footer>
       )}
     </div>

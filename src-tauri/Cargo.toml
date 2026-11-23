@@ -2,6 +2,7 @@
 name = "doozly"
 version = "0.1.0"
 description = "Your tasks, in your own cloud."
+license = "AGPL-3.0-or-later"
 edition = "2024"
 rust-version = "1.88"
 publish = false

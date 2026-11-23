@@ -57,3 +57,11 @@ React 19 and TypeScript on Vite, with the React Compiler. Biome for linting and 
 `pnpm install` sets up a pre-commit hook that runs Biome on staged files and a full typecheck. If you keep a personal hook of your own, put it in `.git/hooks/pre-commit.local` and make it executable. It runs before the project checks.
 
 CI runs the typecheck, lint, unit tests, build and end-to-end tests when a `v*` tag on main is pushed, or by hand on main from the Actions tab (`gh workflow run CI`).
+
+## License
+
+Copyright (C) 2026 The Doozly authors
+
+Doozly is free software: you can redistribute it and/or modify it under the terms of the GNU Affero General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version. See [LICENSE](LICENSE).
+
+If you run a modified copy for other people, the AGPL asks you to offer them its source code too.

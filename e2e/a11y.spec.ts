@@ -56,6 +56,14 @@ for (const scheme of ["light", "dark"] as const) {
     await check(page, "landing page");
   });
 
+  test(`the privacy and terms pages pass axe (${scheme})`, async ({ page }) => {
+    await page.emulateMedia({ colorScheme: scheme });
+    for (const path of ["/privacy.html", "/terms.html"]) {
+      await page.goto(path);
+      await check(page, path);
+    }
+  });
+
   test(`lists, details, menus and dialogs pass axe (${scheme})`, async ({
     page,
   }) => {

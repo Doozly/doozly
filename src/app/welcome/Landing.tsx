@@ -65,6 +65,10 @@ export function Landing({ onDone }: { onDone: () => void }) {
       </div>
 
       <footer className={styles.footer}>
+        <a href="/privacy">Privacy</a>
+        <span aria-hidden>·</span>
+        <a href="/terms">Terms</a>
+        <span aria-hidden>·</span>
         <a href="https://github.com/Doozly/doozly">Free and open source</a>
         <span aria-hidden>·</span>
         <span>Not affiliated with Microsoft</span>
