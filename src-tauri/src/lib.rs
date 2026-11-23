@@ -1,6 +1,7 @@
 mod auth;
 mod desktop;
 mod guard;
+mod policy;
 mod quick;
 mod reminders;
 mod update;
@@ -96,7 +97,11 @@ pub fn run() {
         .on_menu_event(|app, event| desktop::on_menu_event(app, event.id().as_ref()))
         .setup(|app| {
             let config = app.path().app_config_dir()?;
-            let settings = desktop::Settings::load(config.join("desktop.json"));
+            let policy = policy::load();
+            let (settings, first) = desktop::Settings::load(config.join("desktop.json"), &policy);
+            if let (true, Some(on)) = (first, policy.open_at_login) {
+                let _ = desktop::set_open_at_login(app.handle().clone(), on);
+            }
             if settings.get().quick_add {
                 // Taken by another app already: then Settings just shows it as off
                 if let Err(e) = quick::set_enabled(app.handle(), true) {
@@ -115,7 +120,7 @@ pub fn run() {
             app.manage(scheduler.clone());
             let handle = app.handle().clone();
             thread::spawn(move || scheduler.run(|r| notify(&handle, r)));
-            update::start(app.handle());
+            update::start(app.handle(), policy.updates());
 
             if !std::env::args().any(|a| a == HIDDEN) {
                 desktop::show(app.handle());

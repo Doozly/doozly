@@ -8,6 +8,7 @@ use tauri::tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent}
 use tauri::{App, AppHandle, Emitter, Manager, State, Window, WindowEvent};
 use tauri_plugin_autostart::ManagerExt;
 
+use crate::policy::Policy;
 use crate::quick;
 
 /// Per-device settings that only make sense on desktop, so they never sync
@@ -35,15 +36,28 @@ pub struct Settings {
 }
 
 impl Settings {
-    pub fn load(file: PathBuf) -> Self {
-        let prefs = fs::read(&file)
+    /// From the file. On the first start the defaults with the admin's policy on top, saved
+    /// right away so that only happens once. true when it was the first start.
+    pub fn load(file: PathBuf, policy: &Policy) -> (Self, bool) {
+        let saved: Option<Prefs> = fs::read(&file)
             .ok()
-            .and_then(|b| serde_json::from_slice(&b).ok())
-            .unwrap_or_default();
-        Self {
+            .and_then(|b| serde_json::from_slice(&b).ok());
+        let first = saved.is_none();
+        let prefs = saved.unwrap_or_else(|| {
+            let d = Prefs::default();
+            Prefs {
+                close_to_tray: policy.close_to_tray.unwrap_or(d.close_to_tray),
+                quick_add: policy.quick_add.unwrap_or(d.quick_add),
+            }
+        });
+        let settings = Self {
             file,
             prefs: Mutex::new(prefs),
+        };
+        if first {
+            settings.update(|_| {});
         }
+        (settings, first)
     }
 
     pub fn get(&self) -> Prefs {
@@ -294,12 +308,33 @@ mod tests {
     fn quits_on_close_unless_told_otherwise() {
         let dir = std::env::temp_dir().join(format!("doozly-prefs-{}", std::process::id()));
         let file = dir.join("desktop.json");
-        assert!(!Settings::load(file.clone()).get().close_to_tray);
-        Settings::load(file.clone()).update(|p| p.close_to_tray = true);
-        assert!(Settings::load(file.clone()).get().close_to_tray);
+        let none = Policy::default();
+        let load = |p: &Policy| Settings::load(file.clone(), p);
+        let (first, is_first) = load(&none);
+        assert!(is_first && !first.get().close_to_tray);
+        first.update(|p| p.close_to_tray = true);
+        let (again, is_first) = load(&none);
+        assert!(!is_first && again.get().close_to_tray);
         // An unknown or missing field keeps its default
         fs::write(&file, "{}").unwrap();
-        assert!(!Settings::load(file).get().close_to_tray);
+        assert!(!load(&none).0.get().close_to_tray);
+        let _ = fs::remove_dir_all(dir);
+    }
+
+    #[test]
+    fn the_admin_policy_only_sets_the_first_start() {
+        let dir = std::env::temp_dir().join(format!("doozly-policy-{}", std::process::id()));
+        let file = dir.join("desktop.json");
+        let policy = Policy {
+            close_to_tray: Some(true),
+            quick_add: Some(false),
+            ..Policy::default()
+        };
+        let (first, _) = Settings::load(file.clone(), &policy);
+        assert!(first.get().close_to_tray && !first.get().quick_add);
+        first.update(|p| p.close_to_tray = false);
+        // The user's choice wins from then on
+        assert!(!Settings::load(file, &policy).0.get().close_to_tray);
         let _ = fs::remove_dir_all(dir);
     }
 }

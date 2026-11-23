@@ -14,10 +14,11 @@ const FIRST: Duration = Duration::from_secs(30);
 #[derive(Default)]
 pub struct Pending(Mutex<Option<(Update, Vec<u8>)>>);
 
-pub fn start(app: &AppHandle) {
+/// `allowed` is false when an admin's policy leaves updates to the organisation
+pub fn start(app: &AppHandle, allowed: bool) {
     app.manage(Pending::default());
     // A dev build has nothing to update to
-    if cfg!(debug_assertions) {
+    if cfg!(debug_assertions) || !allowed {
         return;
     }
     let app = app.clone();
@@ -37,7 +38,12 @@ async fn fetch(app: &AppHandle) -> tauri_plugin_updater::Result<()> {
     let Some(update) = app.updater()?.check().await? else {
         return Ok(());
     };
-    let have = pending.0.lock().unwrap().as_ref().map(|(u, _)| u.version.clone());
+    let have = pending
+        .0
+        .lock()
+        .unwrap()
+        .as_ref()
+        .map(|(u, _)| u.version.clone());
     if have.as_deref() == Some(update.version.as_str()) {
         return Ok(());
     }
@@ -51,7 +57,12 @@ async fn fetch(app: &AppHandle) -> tauri_plugin_updater::Result<()> {
 /// The version that's downloaded and ready, for a window that missed the event
 #[tauri::command]
 pub fn update_ready(pending: State<'_, Pending>) -> Option<String> {
-    pending.0.lock().unwrap().as_ref().map(|(u, _)| u.version.clone())
+    pending
+        .0
+        .lock()
+        .unwrap()
+        .as_ref()
+        .map(|(u, _)| u.version.clone())
 }
 
 /// Installs it and starts the new version. On Windows the installer quits Doozly itself.
