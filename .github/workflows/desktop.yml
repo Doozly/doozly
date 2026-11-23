@@ -41,9 +41,11 @@ jobs:
           # The oldest supported Ubuntu, so the deb and AppImage run on older glibc too
           - os: ubuntu-22.04
             args: ""
-          - os: macos-latest
+          # Both Macs build on Intel runners: the Apple silicon ones often get no runner for
+          # long enough that GitHub cancels the job. Xcode cross-builds for Apple silicon fine.
+          - os: macos-15-intel
             args: --target aarch64-apple-darwin
-          - os: macos-latest
+          - os: macos-15-intel
             args: --target x86_64-apple-darwin
           - os: windows-latest
             args: ""

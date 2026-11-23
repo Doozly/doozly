@@ -82,12 +82,13 @@ jobs:
           if (Test-Path $exe) { throw "still there after uninstall" }
 
   macos:
-    runs-on: macos-latest
+    # Intel, the Apple silicon runners are often too busy to start
+    runs-on: macos-15-intel
     steps:
       - name: pkg with installer
         run: |
           set -e
-          get() { gh release download "$1" -R "$GITHUB_REPOSITORY" -p '*_aarch64.pkg' -D "pkg-$1"; }
+          get() { gh release download "$1" -R "$GITHUB_REPOSITORY" -p '*_x64.pkg' -D "pkg-$1"; }
           if [ -n "$FROM" ] && get "$FROM"; then
             sudo installer -pkg pkg-"$FROM"/*.pkg -target /
           fi
