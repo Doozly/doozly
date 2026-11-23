@@ -51,6 +51,13 @@ test("a first visit gets the landing page, Get started goes to My Day for good",
   expect(localStorage.getItem("doozly:welcomed")).toBe("1");
 });
 
+test("the footer links to the desktop app and how to install it", async () => {
+  await renderApp("/");
+  expect(
+    await screen.findByRole("link", { name: "Desktop app" }),
+  ).toHaveAttribute("href", "https://github.com/Doozly/doozly#desktop-app");
+});
+
 test("someone who got started before goes straight in", async () => {
   localStorage.setItem("doozly:welcomed", "1");
   const { at } = await renderApp("/");

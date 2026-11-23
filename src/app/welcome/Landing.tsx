@@ -68,6 +68,8 @@ export function Landing({ onDone }: { onDone: () => void }) {
         <span aria-hidden>·</span>
         <a href="/terms">Terms</a>
         <span aria-hidden>·</span>
+        <a href="https://github.com/Doozly/doozly#desktop-app">Desktop app</a>
+        <span aria-hidden>·</span>
         <a href="https://github.com/Doozly/doozly">Free and open source</a>
         <span aria-hidden>·</span>
         <span>Not affiliated with Microsoft</span>
