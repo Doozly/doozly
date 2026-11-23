@@ -7,6 +7,7 @@ import {
   Switch,
 } from "react-aria-components";
 import type { Settings } from "../data/model.ts";
+import { isDesktop } from "../platform.ts";
 import { useActions, useAppState } from "../state/AppContext.tsx";
 import { setting } from "../state/actions.ts";
 import { SidePanel } from "../ui/SidePanel.tsx";
@@ -119,6 +120,20 @@ function SettingsForm() {
       <InstallSection />
 
       <DataSection />
+
+      {/* Desktop can't open links outside the app yet, it would load GitHub in its own window */}
+      {!isDesktop() && (
+        <footer className={styles.about}>
+          <a
+            href="https://github.com/Doozly/doozly"
+            target="_blank"
+            rel="noreferrer"
+          >
+            Doozly on GitHub
+          </a>
+          <span>Free and open source</span>
+        </footer>
+      )}
     </div>
   );
 }

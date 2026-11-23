@@ -85,3 +85,12 @@ test("closing Settings takes it away again", async () => {
   await userEvent.click(screen.getByRole("button", { name: "Close settings" }));
   expect(screen.queryByRole("dialog", { name: "Settings" })).toBeNull();
 });
+
+test("Settings ends with a link to the source on GitHub", async () => {
+  await renderApp();
+  await userEvent.click(screen.getByRole("button", { name: "Settings" }));
+  await screen.findByRole("dialog", { name: "Settings" });
+  expect(
+    screen.getByRole("link", { name: "Doozly on GitHub" }),
+  ).toHaveAttribute("href", "https://github.com/Doozly/doozly");
+});
