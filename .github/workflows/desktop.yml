@@ -1,6 +1,6 @@
 name: Desktop
 
-# Installers for all three systems. macOS minutes are expensive, so only for a tag or by hand.
+# Installers for all three systems. macOS minutes are expensive, so only for a tag on main or by hand.
 on:
   push:
     tags: ["v*"]
@@ -19,7 +19,17 @@ env:
   VITE_RELAY_URL: ${{ vars.VITE_RELAY_URL }}
 
 jobs:
+  # A tag can sit on any branch, the trigger doesnt know. A release from there would go out to everyone.
+  on-main:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - run: git merge-base --is-ancestor "$GITHUB_SHA" origin/main
+
   build:
+    needs: on-main
     strategy:
       fail-fast: false
       matrix:
