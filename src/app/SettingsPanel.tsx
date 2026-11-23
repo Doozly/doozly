@@ -53,8 +53,16 @@ export function SettingsPanel({ isOpen, onOpenChange }: SettingsPanelProps) {
   );
 }
 
+/** On desktop the window keeps to the app, Rust opens other links in the browser */
+function aboutLinks() {
+  return isDesktop()
+    ? { site: "https://doozly.app", external: {} }
+    : { site: "", external: { target: "_blank", rel: "noreferrer" } };
+}
+
 function SettingsForm() {
   const settings = useAppState((s) => s.settings);
+  const { site, external } = aboutLinks();
   const { setSetting } = useActions();
   const [help, setHelp] = useState(false);
   const current = <K extends keyof Settings>(key: K) =>
@@ -121,24 +129,17 @@ function SettingsForm() {
 
       <DataSection />
 
-      {/* Desktop can't open links outside the app yet, it would load them in its own window */}
-      {!isDesktop() && (
-        <footer className={styles.about}>
-          <a
-            href="https://github.com/Doozly/doozly"
-            target="_blank"
-            rel="noreferrer"
-          >
-            Doozly on GitHub
-          </a>
-          <a href="/privacy" target="_blank" rel="noreferrer">
-            Privacy
-          </a>
-          <a href="/terms" target="_blank" rel="noreferrer">
-            Terms
-          </a>
-        </footer>
-      )}
+      <footer className={styles.about}>
+        <a href="https://github.com/Doozly/doozly" {...external}>
+          Doozly on GitHub
+        </a>
+        <a href={`${site}/privacy`} {...external}>
+          Privacy
+        </a>
+        <a href={`${site}/terms`} {...external}>
+          Terms
+        </a>
+      </footer>
     </div>
   );
 }

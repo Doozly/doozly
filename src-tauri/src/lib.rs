@@ -1,5 +1,6 @@
 mod auth;
 mod desktop;
+mod guard;
 mod quick;
 mod reminders;
 mod update;
@@ -70,6 +71,7 @@ pub fn run() {
         )
         .plugin(quick::plugin())
         .plugin(tauri_plugin_opener::init())
+        .plugin(guard::plugin())
         .manage(auth::Auth::new(Arc::new(auth::Keychain::default())))
         .plugin(tauri_plugin_updater::Builder::new().build())
         .invoke_handler(tauri::generate_handler![

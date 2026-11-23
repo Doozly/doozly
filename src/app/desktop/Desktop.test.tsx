@@ -114,3 +114,16 @@ test("an update that was ready before the window listened still shows", async ()
   render(<UpdateNotice />);
   expect(await screen.findByRole("button", { name: "Restart" })).toBeVisible();
 });
+
+test("Settings links to the site in the browser, not in a new app window", async () => {
+  await renderApp();
+  await userEvent.click(screen.getByRole("button", { name: "Settings" }));
+  await screen.findByRole("dialog", { name: "Settings" });
+  const privacy = screen.getByRole("link", { name: "Privacy" });
+  expect(privacy).toHaveAttribute("href", "https://doozly.app/privacy");
+  expect(privacy).not.toHaveAttribute("target");
+  expect(screen.getByRole("link", { name: "Terms" })).toHaveAttribute(
+    "href",
+    "https://doozly.app/terms",
+  );
+});

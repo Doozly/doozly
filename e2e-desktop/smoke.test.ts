@@ -105,3 +105,12 @@ test("Settings talks to the Rust side", async () => {
   // The switches only show once desktop_settings has answered
   await s.byText("span", "Keep running in the tray when closed");
 });
+
+test("the window won't leave the app for a web page", async () => {
+  const home = await s.run<string>("return location.origin");
+  // The guard hands it to the browser instead, on CI there's none to open
+  await s.run("location.href = 'https://example.invalid/'; return null");
+  await new Promise((r) => setTimeout(r, 1500));
+  assert.equal(await s.run<string>("return location.origin"), home);
+  await s.byText("h1", "My Day");
+});
