@@ -26,6 +26,8 @@ The installers are not code signed, so the first start shows a warning once:
 
 Updates are signed with the project's own key, so the app only installs real releases from this repository.
 
+Rolling it out in an organisation: silent installs, the policy file and sign-in consent are in the [guide for IT admins](https://doozly.app/admin).
+
 ## Requirements
 
 - Node.js 24 or later

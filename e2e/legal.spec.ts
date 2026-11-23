@@ -14,6 +14,17 @@ test("the privacy and terms pages open and link to each other", async ({
   ).toBeVisible();
 });
 
+test("the admin guide opens, with the policy file and the consent link", async ({
+  page,
+}) => {
+  await page.goto("/admin.html");
+  await expect(
+    page.getByRole("heading", { level: 1, name: "Deploying Doozly" }),
+  ).toBeVisible();
+  await expect(page.getByText("/etc/doozly/policy.json")).toBeVisible();
+  await expect(page.getByText(/adminconsent\?client_id=/)).toBeVisible();
+});
+
 test("the landing page links to both", async ({ page }) => {
   await page.goto("/");
   await expect(page.getByRole("link", { name: "Privacy" })).toHaveAttribute(
@@ -48,6 +59,7 @@ test("once the service worker runs the app, the pages still load as pages", asyn
     ["/privacy", "Privacy policy - Doozly"],
     ["/terms", "Terms of use - Doozly"],
     ["/privacy.html", "Privacy policy - Doozly"],
+    ["/admin", "Deploying Doozly - Doozly"],
   ] as const) {
     await page.goto(path);
     await expect(page).toHaveTitle(title);

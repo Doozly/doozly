@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="en-GB">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Deploying Doozly - Doozly</title>
+    <meta name="description" content="For IT admins: silent installs, the policy file, updates and sign-in consent for the Doozly desktop app." />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="/legal.css" />
+  </head>
+  <body>
+    <main>
+      <p><a href="/">Doozly</a></p>
+      <h1>Deploying Doozly</h1>
+      <p class="updated">For IT admins. Last updated 23 November 2026</p>
+
+      <div class="summary">
+        <p><strong>The short version.</strong> Every installer installs, upgrades and uninstalls without a prompt. A small policy file switches off the built-in updater and sets the defaults. Doozly can only see its own folder in each user's OneDrive, Google Drive or Dropbox, and there is no Doozly server holding any task data.</p>
+      </div>
+
+      <h2>Installers</h2>
+      <p>All installers are on the <a href="https://github.com/Doozly/doozly/releases/latest">latest release</a>. Replace <code>&lt;version&gt;</code> below with its version number, like <code>0.1.0</code>.</p>
+      <table>
+        <thead><tr><th>System</th><th>For managed installs</th><th>For one person</th></tr></thead>
+        <tbody>
+          <tr><td>Windows 10 and 11 (x64)</td><td><code>Doozly_&lt;version&gt;_x64_en-US.msi</code></td><td><code>Doozly_&lt;version&gt;_x64-setup.exe</code></td></tr>
+          <tr><td>macOS (Apple silicon)</td><td><code>Doozly_&lt;version&gt;_aarch64.pkg</code></td><td><code>Doozly_&lt;version&gt;_aarch64.dmg</code></td></tr>
+          <tr><td>macOS (Intel)</td><td><code>Doozly_&lt;version&gt;_x64.pkg</code></td><td><code>Doozly_&lt;version&gt;_x64.dmg</code></td></tr>
+          <tr><td>Debian, Ubuntu</td><td><code>Doozly_&lt;version&gt;_amd64.deb</code></td><td><code>Doozly_&lt;version&gt;_amd64.AppImage</code></td></tr>
+          <tr><td>Fedora, RHEL, openSUSE</td><td><code>Doozly-&lt;version&gt;-1.x86_64.rpm</code></td><td><code>Doozly_&lt;version&gt;_amd64.AppImage</code></td></tr>
+        </tbody>
+      </table>
+      <p>The installers are not code signed. Installed by a management tool they run without a warning. Installed by hand, Windows and macOS warn once on the first start, see the <a href="https://github.com/Doozly/doozly#desktop-app">readme</a>. Some tools only take signed packages, like Intune for macOS line-of-business apps, and can't deploy the macOS package.</p>
+
+      <h2>Windows</h2>
+      <p>The MSI installs per machine to <code>C:\Program Files\Doozly</code> and doesn't start Doozly afterwards.</p>
+      <pre><code>msiexec /i Doozly_&lt;version&gt;_x64_en-US.msi /qn /norestart
+msiexec /x Doozly_&lt;version&gt;_x64_en-US.msi /qn /norestart</code></pre>
+      <p>Installing a newer MSI over an older one upgrades it. In Intune, add it as a line-of-business app or a Win32 app with these commands. Doozly needs the Microsoft Edge WebView2 runtime. Windows 11 and an up-to-date Windows 10 have it already, otherwise the MSI downloads it silently. On networks without internet access, deploy Microsoft's WebView2 Evergreen Standalone Installer first.</p>
+
+      <h2>macOS</h2>
+      <p>The package installs Doozly to <code>/Applications</code>. Jamf, Kandji, Munki and other tools that take unsigned packages can deploy it as it is.</p>
+      <pre><code>sudo installer -pkg Doozly_&lt;version&gt;_aarch64.pkg -target /
+sudo rm -rf /Applications/Doozly.app &amp;&amp; sudo pkgutil --forget app.doozly.desktop</code></pre>
+
+      <h2>Linux</h2>
+      <p>The deb and rpm declare their dependencies (WebKitGTK 4.1, GTK 3, libayatana-appindicator), so the package manager installs them too.</p>
+      <pre><code>sudo apt-get install -y ./Doozly_&lt;version&gt;_amd64.deb
+sudo apt-get remove -y doozly
+
+sudo dnf install -y ./Doozly-&lt;version&gt;-1.x86_64.rpm
+sudo dnf remove -y doozly</code></pre>
+      <p>With Ansible:</p>
+      <pre><code>- name: Doozly (Debian, Ubuntu)
+  ansible.builtin.apt:
+    deb: https://github.com/Doozly/doozly/releases/download/v&lt;version&gt;/Doozly_&lt;version&gt;_amd64.deb
+
+- name: Doozly (Fedora, RHEL)
+  ansible.builtin.dnf:
+    name: https://github.com/Doozly/doozly/releases/download/v&lt;version&gt;/Doozly-&lt;version&gt;-1.x86_64.rpm
+    disable_gpg_check: true</code></pre>
+
+      <h2>The policy file</h2>
+      <p>Put a <code>policy.json</code> in this place, readable by everyone:</p>
+      <ul>
+        <li><strong>Windows:</strong> <code>C:\ProgramData\Doozly\policy.json</code></li>
+        <li><strong>macOS:</strong> <code>/Library/Application Support/Doozly/policy.json</code></li>
+        <li><strong>Linux:</strong> <code>/etc/doozly/policy.json</code></li>
+      </ul>
+      <pre><code>{
+  "updates": false,
+  "openAtLogin": true,
+  "closeToTray": true,
+  "quickAdd": false
+}</code></pre>
+      <table>
+        <thead><tr><th>Key</th><th>Without it</th><th>What it does</th></tr></thead>
+        <tbody>
+          <tr><td><code>updates</code></td><td><code>true</code></td><td><code>false</code> switches the built-in updater off for good. Users can't switch it back on.</td></tr>
+          <tr><td><code>openAtLogin</code></td><td><code>false</code></td><td>Starts Doozly in the tray when the user logs in.</td></tr>
+          <tr><td><code>closeToTray</code></td><td><code>false</code></td><td>The close button keeps Doozly running in the tray, so reminders still come.</td></tr>
+          <tr><td><code>quickAdd</code></td><td><code>true</code></td><td>The quick add box on Ctrl+Alt+N (⌥⌘N on a Mac).</td></tr>
+        </tbody>
+      </table>
+      <p>Apart from <code>updates</code>, these are only the defaults for a user's first start. Users can change them in Settings after. A missing file is fine, and a broken one is ignored.</p>
+
+      <h2>Updates</h2>
+      <p>On its own, Doozly checks for a new version after start and then every 6 hours. It downloads it in the background and installs it when the user clicks Restart. Updates come from <code>github.com/Doozly/doozly</code> and must carry the project's signature, otherwise they are refused. For managed installs, set <code>"updates": false</code> and roll out new versions with your own tooling.</p>
+
+      <h2>Sign-in and consent</h2>
+      <p>Users sign in in their normal browser. Doozly asks only for:</p>
+      <ul>
+        <li><strong>Microsoft:</strong> <code>Files.ReadWrite.AppFolder</code> (its own folder <code>Apps/Doozly</code> in OneDrive), plus <code>openid</code>, <code>profile</code> and <code>offline_access</code> for the name, email and staying signed in. Work or school accounts need OneDrive in the tenant.</li>
+        <li><strong>Google:</strong> <code>drive.appdata</code> (a hidden folder for Doozly only), plus <code>openid</code>, <code>email</code> and <code>profile</code>.</li>
+        <li><strong>Dropbox:</strong> read and write in its app folder <code>Apps/Doozly</code>, plus the account's name and email.</li>
+      </ul>
+      <p>Doozly can't see any other files. Tasks go straight from the device to the user's own storage.</p>
+      <p><strong>Microsoft Entra:</strong> if your tenant doesn't let users consent to apps themselves, approve Doozly once for everyone. Open this link signed in as a Global Administrator or Privileged Role Administrator, with your tenant ID or domain in it:</p>
+      <pre><code>https://login.microsoftonline.com/&lt;your-tenant&gt;/adminconsent?client_id=a4cd3269-6eee-4bc0-89ed-a31c4a758a55</code></pre>
+      <p>Or, after the first user has tried to sign in, find Doozly in the Entra admin centre under Enterprise applications, then Permissions, and choose "Grant admin consent".</p>
+      <p><strong>Google Workspace:</strong> if third-party apps are restricted, trust Doozly in the Admin console under Security, then Access and data control, then API controls, then Manage third-party app access. Add both client IDs: <code>44703375708-ksph8ud7rkf61dd73mngc35bog3844rk.apps.googleusercontent.com</code> (web) and <code>44703375708-rduhua6ehe0e1sdsprutekpok9aa9pp7.apps.googleusercontent.com</code> (desktop).</p>
+      <p><strong>Dropbox:</strong> nothing to approve. A Dropbox team admin can see and remove the link under each member's connected apps.</p>
+
+      <h2>Network</h2>
+      <p>Behind a proxy or firewall, the desktop app needs these hosts:</p>
+      <ul>
+        <li><strong>Microsoft:</strong> <code>login.microsoftonline.com</code>, <code>graph.microsoft.com</code>, and for the files <code>*.1drv.com</code>, <code>*.microsoftpersonalcontent.com</code>, <code>*.sharepoint.com</code></li>
+        <li><strong>Google:</strong> <code>accounts.google.com</code>, <code>oauth2.googleapis.com</code>, <code>www.googleapis.com</code></li>
+        <li><strong>Dropbox:</strong> <code>www.dropbox.com</code>, <code>api.dropboxapi.com</code>, <code>content.dropboxapi.com</code></li>
+        <li><strong>Updates:</strong> <code>github.com</code>, <code>objects.githubusercontent.com</code></li>
+      </ul>
+      <p>The sign-in comes back to the app on the computer itself (<code>localhost</code>). For Dropbox that's on port 38471, 38472 or 38473. Nothing else listens, and the desktop app needs no Doozly server.</p>
+
+      <h2>Where Doozly keeps things</h2>
+      <ul>
+        <li><strong>Tasks and settings:</strong> in the user's profile, under <code>app.doozly.desktop</code>. On Windows in <code>%APPDATA%</code> and <code>%LOCALAPPDATA%</code>, on macOS in <code>~/Library/Application Support</code> and <code>~/Library/WebKit</code>, on Linux in <code>~/.config</code> and <code>~/.local/share</code>.</li>
+        <li><strong>Sign-in:</strong> the refresh token in the system's credential store (Credential Manager, Keychain, Secret Service), under <code>app.doozly.desktop</code>.</li>
+      </ul>
+      <p>Uninstalling leaves these in place, like most apps do. Delete them too for a clean removal. The synced copy stays in the user's own storage.</p>
+
+      <h2>Help</h2>
+      <p>Write to <a href="mailto:support@doozly.app">support@doozly.app</a>, or open an issue on <a href="https://github.com/Doozly/doozly/issues">GitHub</a>.</p>
+    </main>
+    <footer>
+      <a href="/">Doozly</a> · <a href="/privacy">Privacy policy</a> · <a href="/terms">Terms of use</a> · Not affiliated with Microsoft, Google or Dropbox
+    </footer>
+  </body>
+</html>
