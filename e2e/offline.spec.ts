@@ -41,3 +41,30 @@ test("after one visit the app opens and works offline", async ({
   await page.reload();
   await expect(page.getByRole("link", { name: "Offline milk" })).toBeVisible();
 });
+
+test("the sign-in popup's page isn't the app, also at /redirect like on Cloudflare", async ({
+  page,
+  context,
+}) => {
+  await page.goto("/lists/inbox");
+  await page.evaluate(async () => {
+    await navigator.serviceWorker.ready;
+    if (!navigator.serviceWorker.controller) {
+      await new Promise((r) =>
+        navigator.serviceWorker.addEventListener("controllerchange", r, {
+          once: true,
+        }),
+      );
+    }
+  });
+  await context.route(/\/redirect(\.html)?\?/, (route) =>
+    route.fulfill({
+      contentType: "text/html",
+      body: "<p>from the network</p>",
+    }),
+  );
+  for (const path of ["/redirect?state=dropbox.x", "/redirect.html?state=x"]) {
+    await page.goto(path);
+    await expect(page.getByText("from the network")).toBeVisible();
+  }
+});

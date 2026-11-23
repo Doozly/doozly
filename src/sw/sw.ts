@@ -19,10 +19,11 @@ declare const self: ServiceWorkerGlobalScope & {
 // The whole built app, so it opens offline. The list is filled in at build time.
 precacheAndRoute(self.__WB_MANIFEST);
 cleanupOutdatedCaches();
-// Every page path is the app itself (/lists/…), also offline
+// Every page path is the app itself (/lists/…), also offline. Not the sign-in popups' page:
+// Cloudflare serves /redirect.html at /redirect, both have to go to the network.
 registerRoute(
   new NavigationRoute(createHandlerBoundToURL("/index.html"), {
-    denylist: [/^\/redirect\.html/, /^\/dev\//],
+    denylist: [/^\/redirect(\.html)?(\?|$)/, /^\/dev\//],
   }),
 );
 

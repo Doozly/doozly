@@ -14,7 +14,7 @@ use crate::quick;
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", default)]
 pub struct Prefs {
-    /// Closing the window keeps Doozly running in the tray, so reminders still come
+    /// Closing the window keeps Doozly running in the tray, so reminders still come. Off unless chosen.
     pub close_to_tray: bool,
     /// The global shortcut for the quick add box
     pub quick_add: bool,
@@ -23,7 +23,7 @@ pub struct Prefs {
 impl Default for Prefs {
     fn default() -> Self {
         Self {
-            close_to_tray: true,
+            close_to_tray: false,
             quick_add: true,
         }
     }
@@ -264,19 +264,25 @@ pub fn on_menu_event(app: &AppHandle, id: &str) {
     }
 }
 
-/// Closing the main window hides it when Doozly lives in the tray, so reminders keep coming
+/// Closing the main window quits Doozly, or hides it when it should live in the tray
 pub fn on_window_event(window: &Window, event: &WindowEvent) {
     if let WindowEvent::CloseRequested { api, .. } = event {
-        let settings = window.app_handle().state::<Settings>();
-        if window.label() == "main" && settings.get().close_to_tray {
-            api.prevent_close();
-            // With no tray to come back from, a hidden window would be lost
-            let _ = if tray_shown() {
-                window.hide()
-            } else {
-                window.minimize()
-            };
+        if window.label() != "main" {
+            return;
         }
+        let settings = window.app_handle().state::<Settings>();
+        if !settings.get().close_to_tray {
+            // A hidden quick add window would keep it running otherwise
+            window.app_handle().exit(0);
+            return;
+        }
+        api.prevent_close();
+        // With no tray to come back from, a hidden window would be lost
+        let _ = if tray_shown() {
+            window.hide()
+        } else {
+            window.minimize()
+        };
     }
 }
 
@@ -285,15 +291,15 @@ mod tests {
     use super::*;
 
     #[test]
-    fn closes_to_the_tray_unless_told_otherwise() {
+    fn quits_on_close_unless_told_otherwise() {
         let dir = std::env::temp_dir().join(format!("doozly-prefs-{}", std::process::id()));
         let file = dir.join("desktop.json");
-        assert!(Settings::load(file.clone()).get().close_to_tray);
-        Settings::load(file.clone()).update(|p| p.close_to_tray = false);
         assert!(!Settings::load(file.clone()).get().close_to_tray);
+        Settings::load(file.clone()).update(|p| p.close_to_tray = true);
+        assert!(Settings::load(file.clone()).get().close_to_tray);
         // An unknown or missing field keeps its default
         fs::write(&file, "{}").unwrap();
-        assert!(Settings::load(file).get().close_to_tray);
+        assert!(!Settings::load(file).get().close_to_tray);
         let _ = fs::remove_dir_all(dir);
     }
 }
