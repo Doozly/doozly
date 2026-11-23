@@ -4,7 +4,15 @@ A local-first to-do app for the web and desktop. Your tasks live in your browser
 
 Doozly is modelled on the layout and behaviour of Microsoft To Do. It is an independent project and is not affiliated with or endorsed by Microsoft.
 
-Early days: the app is being scaffolded and doesn't do much yet.
+![Doozly with a list open and the task details beside it](.github/screenshots/light.png)
+
+Lists, My Day, Important and Planned, steps, notes, due dates, reminders and repeats. Themes for every list, dark mode, works offline and there is also a desktop app for Linux, macOS and Windows.
+
+<p>
+  <img src=".github/screenshots/dark.png" alt="A themed list with a background in dark mode" width="72%">
+  &nbsp;
+  <img src=".github/screenshots/phone.png" alt="My Day on a phone" width="24%">
+</p>
 
 ## Requirements
 
