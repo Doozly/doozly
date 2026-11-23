@@ -19,6 +19,7 @@ interface RustError {
 const storage: Record<ProviderKind, string> = {
   google: "Google Drive",
   microsoft: "OneDrive",
+  dropbox: "Dropbox",
 };
 
 const tauriInvoke: Invoke = async (cmd, args) =>
@@ -30,7 +31,7 @@ const rustError = (err: unknown): RustError =>
     : { kind: "failed", message: String(err) };
 
 /**
- * Sign-in for the desktop app. Google and Microsoft both refuse an embedded webview, so the Rust
+ * Sign-in for the desktop app. The providers all refuse an embedded webview, so the Rust
  * side signs in in the system browser and keeps the refresh token in the OS keychain.
  */
 export function createDesktopAuth(

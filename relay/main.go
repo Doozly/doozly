@@ -16,6 +16,7 @@ import (
 
 	"doozly.app/relay/internal/api"
 	"doozly.app/relay/internal/config"
+	"doozly.app/relay/internal/dropbox"
 	"doozly.app/relay/internal/google"
 	"doozly.app/relay/internal/identity"
 	"doozly.app/relay/internal/push"
@@ -78,11 +79,16 @@ func run() error {
 	verifier := identity.New(keysCtx, identity.Options{
 		GoogleClientID:    cfg.GoogleClientID,
 		MicrosoftClientID: cfg.MicrosoftClientID,
+		DropboxClientID:   cfg.DropboxClientID,
 	})
 
 	var googleTokens api.GoogleTokens
 	if cfg.GoogleClientSecret != "" {
 		googleTokens = google.New(cfg.GoogleClientID, cfg.GoogleClientSecret)
+	}
+	var dropboxTokens api.DropboxTokens
+	if cfg.DropboxClientID != "" {
+		dropboxTokens = dropbox.New(cfg.DropboxClientID)
 	}
 
 	var pushStore api.PushStore
@@ -110,6 +116,7 @@ func run() error {
 			Store:          db,
 			Verifier:       verifier,
 			Google:         googleTokens,
+			Dropbox:        dropboxTokens,
 			Push:           pushStore,
 			VAPIDPublicKey: cfg.VAPIDPublicKey,
 			Sessions:       api.Sessions{Key: cfg.SessionKey, TTL: cfg.SessionTTL},
@@ -127,7 +134,7 @@ func run() error {
 	go func() {
 		log.Info("listening", "addr", cfg.Addr,
 			"google", cfg.GoogleClientID != "", "googleTokens", googleTokens != nil,
-			"microsoft", cfg.MicrosoftClientID != "", "push", pushStore != nil)
+			"microsoft", cfg.MicrosoftClientID != "", "dropbox", dropboxTokens != nil, "push", pushStore != nil)
 		if err := srv.ListenAndServe(); !errors.Is(err, http.ErrServerClosed) {
 			failed <- err
 		}

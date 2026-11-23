@@ -16,6 +16,7 @@ env:
   SKIP_INSTALL_SIMPLE_GIT_HOOKS: "1"
   VITE_GOOGLE_CLIENT_ID: ${{ vars.VITE_GOOGLE_CLIENT_ID }}
   VITE_MICROSOFT_CLIENT_ID: ${{ vars.VITE_MICROSOFT_CLIENT_ID }}
+  VITE_DROPBOX_CLIENT_ID: ${{ vars.VITE_DROPBOX_CLIENT_ID }}
   VITE_RELAY_URL: ${{ vars.VITE_RELAY_URL }}
   # Desktop sign-in, only the Rust build reads these (src-tauri/build.rs)
   GOOGLE_DESKTOP_CLIENT_ID: ${{ vars.GOOGLE_DESKTOP_CLIENT_ID }}

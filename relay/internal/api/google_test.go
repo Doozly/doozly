@@ -55,7 +55,7 @@ func setupGoogle(t *testing.T) (http.Handler, *server) {
 		Log:            slog.New(slog.NewTextHandler(io.Discard, nil)),
 	})
 	// Same key, so the test can seal cookies like the server does
-	sealer, _ := newSealer([]byte("0123456789abcdef0123456789abcdef"))
+	sealer, _ := newGoogleSealer([]byte("0123456789abcdef0123456789abcdef"))
 	return h, &server{sealer: sealer}
 }
 
@@ -172,8 +172,8 @@ func TestGoogleEndpointsNeedASecret(t *testing.T) {
 }
 
 func TestSealerRoundTrip(t *testing.T) {
-	a, _ := newSealer([]byte("0123456789abcdef0123456789abcdef"))
-	b, _ := newSealer([]byte("another key, another key, anoth!"))
+	a, _ := newGoogleSealer([]byte("0123456789abcdef0123456789abcdef"))
+	b, _ := newGoogleSealer([]byte("another key, another key, anoth!"))
 	sealed := a.seal("secret")
 	if got, ok := a.open(sealed); !ok || got != "secret" {
 		t.Errorf("%q %v", got, ok)
@@ -183,5 +183,9 @@ func TestSealerRoundTrip(t *testing.T) {
 	}
 	if a.seal("secret") == sealed {
 		t.Error("every seal needs a fresh nonce")
+	}
+	c, _ := newDropboxSealer([]byte("0123456789abcdef0123456789abcdef"))
+	if _, ok := c.open(sealed); ok {
+		t.Error("the Dropbox cookie mustn't open the Google one")
 	}
 }

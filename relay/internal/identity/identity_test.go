@@ -69,16 +69,24 @@ func claims(iss, aud, sub string, extra map[string]any) map[string]any {
 }
 
 func setup(t *testing.T) (*OIDC, *fakeIssuer, *fakeIssuer) {
-	google, microsoft := newIssuer(t), newIssuer(t)
+	v, google, microsoft, _ := setupAll(t)
+	return v, google, microsoft
+}
+
+func setupAll(t *testing.T) (*OIDC, *fakeIssuer, *fakeIssuer, *fakeIssuer) {
+	google, microsoft, dropbox := newIssuer(t), newIssuer(t), newIssuer(t)
 	v := New(context.Background(), Options{
 		GoogleClientID:     "g-client",
 		MicrosoftClientID:  "m-client",
+		DropboxClientID:    "d-client",
 		GoogleIssuer:       "https://accounts.example",
 		GoogleKeysURL:      google.server.URL,
 		MicrosoftIssuerFmt: "https://login.example/%s/v2.0",
 		MicrosoftKeysURL:   microsoft.server.URL,
+		DropboxIssuer:      "https://dropbox.example",
+		DropboxKeysURL:     dropbox.server.URL,
 	})
-	return v, google, microsoft
+	return v, google, microsoft, dropbox
 }
 
 func TestGoogleToken(t *testing.T) {
@@ -135,9 +143,29 @@ func TestMicrosoftTokenAnyTenant(t *testing.T) {
 	}
 }
 
+func TestDropboxToken(t *testing.T) {
+	v, _, _, dropbox := setupAll(t)
+	ctx := context.Background()
+	id, err := v.Verify(ctx, "dropbox", dropbox.token(t, claims("https://dropbox.example", "d-client", "dbid:AAH4", nil)))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if id.UserID != UserID("dropbox", "dbid:AAH4") {
+		t.Errorf("%+v", id)
+	}
+	for name, c := range map[string]map[string]any{
+		"other app":    claims("https://dropbox.example", "someone-else", "dbid:AAH4", nil),
+		"other issuer": claims("https://accounts.example", "d-client", "dbid:AAH4", nil),
+	} {
+		if _, err := v.Verify(ctx, "dropbox", dropbox.token(t, c)); !errors.Is(err, ErrInvalidToken) {
+			t.Errorf("%s: got %v", name, err)
+		}
+	}
+}
+
 func TestUnknownOrUnconfiguredProvider(t *testing.T) {
 	v := New(context.Background(), Options{GoogleClientID: "g"})
-	for _, p := range []string{"microsoft", "github", ""} {
+	for _, p := range []string{"microsoft", "dropbox", "github", ""} {
 		if _, err := v.Verify(context.Background(), p, "x"); !errors.Is(err, ErrUnknownProvider) {
 			t.Errorf("%q: %v", p, err)
 		}

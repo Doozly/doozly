@@ -46,6 +46,7 @@ func TestEverythingSet(t *testing.T) {
 		"GOOGLE_CLIENT_ID":      "g",
 		"GOOGLE_CLIENT_SECRET":  "s",
 		"MICROSOFT_CLIENT_ID":   "m",
+		"DROPBOX_CLIENT_ID":     "d",
 	}))
 	if err != nil {
 		t.Fatal(err)
@@ -56,8 +57,8 @@ func TestEverythingSet(t *testing.T) {
 	if cfg.SessionTTL != 2*time.Hour || cfg.LogLevel != slog.LevelDebug {
 		t.Errorf("ttl %v level %v", cfg.SessionTTL, cfg.LogLevel)
 	}
-	if cfg.GoogleClientID != "g" || cfg.GoogleClientSecret != "s" || cfg.MicrosoftClientID != "m" {
-		t.Errorf("client ids %q %q", cfg.GoogleClientID, cfg.MicrosoftClientID)
+	if cfg.GoogleClientID != "g" || cfg.GoogleClientSecret != "s" || cfg.MicrosoftClientID != "m" || cfg.DropboxClientID != "d" {
+		t.Errorf("client ids %q %q %q", cfg.GoogleClientID, cfg.MicrosoftClientID, cfg.DropboxClientID)
 	}
 }
 

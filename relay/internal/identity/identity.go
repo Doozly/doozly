@@ -30,11 +30,14 @@ type Verifier interface {
 type Options struct {
 	GoogleClientID    string
 	MicrosoftClientID string
+	DropboxClientID   string
 
 	GoogleIssuer       string
 	GoogleKeysURL      string
 	MicrosoftIssuerFmt string // with one %s for the tenant id
 	MicrosoftKeysURL   string
+	DropboxIssuer      string
+	DropboxKeysURL     string
 }
 
 func (o *Options) defaults() {
@@ -50,12 +53,19 @@ func (o *Options) defaults() {
 	if o.MicrosoftKeysURL == "" {
 		o.MicrosoftKeysURL = "https://login.microsoftonline.com/common/discovery/v2.0/keys"
 	}
+	if o.DropboxIssuer == "" {
+		o.DropboxIssuer = "https://www.dropbox.com"
+	}
+	if o.DropboxKeysURL == "" {
+		o.DropboxKeysURL = "https://www.dropbox.com/.well-known/jwks"
+	}
 }
 
 // OIDC checks ID tokens against the providers' published keys (JWKS), fetched and cached by go-oidc.
 type OIDC struct {
 	google       *oidc.IDTokenVerifier
 	microsoft    *oidc.IDTokenVerifier
+	dropbox      *oidc.IDTokenVerifier
 	microsoftIss string
 }
 
@@ -75,6 +85,10 @@ func New(ctx context.Context, o Options) *OIDC {
 			SkipIssuerCheck: true,
 		})
 	}
+	if o.DropboxClientID != "" {
+		keys := oidc.NewRemoteKeySet(ctx, o.DropboxKeysURL)
+		v.dropbox = oidc.NewVerifier(o.DropboxIssuer, keys, &oidc.Config{ClientID: o.DropboxClientID})
+	}
 	return v
 }
 
@@ -85,6 +99,8 @@ func (v *OIDC) Verify(ctx context.Context, provider, raw string) (Identity, erro
 		verifier = v.google
 	case "microsoft":
 		verifier = v.microsoft
+	case "dropbox":
+		verifier = v.dropbox
 	}
 	if verifier == nil {
 		return Identity{}, ErrUnknownProvider

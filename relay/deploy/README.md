@@ -38,7 +38,7 @@ The relay runs as a systemd service on a small Linux VPS (Oracle Cloud Always Fr
 
    Copy `cloudflared.yml` to `/etc/cloudflared/config.yml` and put the tunnel id in both places.
 
-6. **Write the env file.** Copy `relay.env.server.example` to `/etc/doozly-relay/relay.env` and fill it in: a new `RELAY_SESSION_KEY` (`openssl rand -base64 32`), the Google and Microsoft client IDs, the Google client secret, a VAPID pair (`go run . -vapid-keys` in `relay/`) and a `VAPID_SUBJECT`. `install.sh` makes it root-only.
+6. **Write the env file.** Copy `relay.env.server.example` to `/etc/doozly-relay/relay.env` and fill it in: a new `RELAY_SESSION_KEY` (`openssl rand -base64 32`), the Google, Microsoft and Dropbox client IDs, the Google client secret, a VAPID pair (`go run . -vapid-keys` in `relay/`) and a `VAPID_SUBJECT`. `install.sh` makes it root-only.
 7. **Deploy** (below), then start the tunnel with `sudo cloudflared service install`. It starts at once, so doing it before the relay runs only gets you 502s. Check `curl https://api.doozly.app/healthz` from your own machine.
 
 ## Deploying

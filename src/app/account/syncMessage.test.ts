@@ -1,7 +1,7 @@
 import { expect, test } from "vitest";
 import type { SyncPhase } from "../../sync/engine.ts";
 import type { SessionState } from "../../sync/session.ts";
-import { syncMessage } from "./syncMessage.ts";
+import { storageList, syncMessage } from "./syncMessage.ts";
 
 const state = (
   phase: SyncPhase | null,
@@ -83,4 +83,12 @@ test("while files move it says which way and how far", () => {
     text: "Syncing…",
     attention: false,
   });
+});
+
+test("the storages read as a list", () => {
+  expect(storageList(["microsoft"])).toBe("OneDrive");
+  expect(storageList(["microsoft", "google"])).toBe("OneDrive or Google Drive");
+  expect(storageList(["microsoft", "google", "dropbox"])).toBe(
+    "OneDrive, Google Drive or Dropbox",
+  );
 });

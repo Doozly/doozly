@@ -15,7 +15,7 @@ import styles from "./AccountButton.module.css";
 import { ProviderButton } from "./ProviderButton.tsx";
 import { useSession, useSessionState } from "./SessionContext.tsx";
 import { type ConfirmMerge, useConfirmMerge, useSignIn } from "./signIn.tsx";
-import { storageNames, syncMessage } from "./syncMessage.ts";
+import { storageList, storageNames, syncMessage } from "./syncMessage.ts";
 
 const initials = (name: string) =>
   name
@@ -102,7 +102,8 @@ function SignedOut({ confirmMerge }: { confirmMerge: ConfirmMerge }) {
       </Heading>
       <p className={styles.text}>
         Sign in to back up your lists and see them on all your devices. They're
-        kept in your own OneDrive or Google Drive, in a folder only Doozly uses.
+        kept in your own {storageList(session?.providers ?? [])}, in a folder
+        only Doozly uses.
       </p>
       {session?.providers.map((kind) => (
         <ProviderButton

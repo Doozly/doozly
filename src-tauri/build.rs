@@ -1,8 +1,9 @@
 use std::{env, fs};
 
 // Client IDs for desktop sign-in, from the environment (CI) or ../.env.local (dev). Missing is fine, then that provider says so.
-const SIGN_IN_KEYS: [&str; 3] = [
+const SIGN_IN_KEYS: [&str; 4] = [
     "VITE_MICROSOFT_CLIENT_ID",
+    "VITE_DROPBOX_CLIENT_ID",
     "GOOGLE_DESKTOP_CLIENT_ID",
     "GOOGLE_DESKTOP_CLIENT_SECRET",
 ];

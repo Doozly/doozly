@@ -66,7 +66,7 @@ export default defineConfig(({ mode }) => {
     preview: { headers: securityHeaders(relayUrl) },
     build: {
       rolldownOptions: {
-        // Microsoft's sign-in popup comes back to its own small page
+        // The Microsoft and Dropbox sign-in popups come back to their own small page
         input: { main: "index.html", redirect: "redirect.html" },
       },
     },
@@ -79,6 +79,7 @@ export default defineConfig(({ mode }) => {
       env: {
         VITE_GOOGLE_CLIENT_ID: "",
         VITE_MICROSOFT_CLIENT_ID: "",
+        VITE_DROPBOX_CLIENT_ID: "",
         VITE_RELAY_URL: "",
       },
     },

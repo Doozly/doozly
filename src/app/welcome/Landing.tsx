@@ -4,7 +4,7 @@ import { Logo } from "../../ui/Logo.tsx";
 import { ProviderButton } from "../account/ProviderButton.tsx";
 import { useSession } from "../account/SessionContext.tsx";
 import { useConfirmMerge, useSignIn } from "../account/signIn.tsx";
-import { storageNames } from "../account/syncMessage.ts";
+import { storageList } from "../account/syncMessage.ts";
 import styles from "./Landing.module.css";
 
 export function Landing({ onDone }: { onDone: () => void }) {
@@ -56,8 +56,7 @@ export function Landing({ onDone }: { onDone: () => void }) {
               </p>
             )}
             <p className={styles.hint}>
-              Your tasks go to your own{" "}
-              {providers.map((k) => storageNames[k]).join(" or ")}, in a folder
+              Your tasks go to your own {storageList(providers)}, in a folder
               only Doozly uses. There's no Doozly server holding them.
             </p>
           </section>

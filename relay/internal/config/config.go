@@ -24,6 +24,8 @@ type Config struct {
 	// Only on the server, never in the SPA. Without it the Google token endpoints are off.
 	GoogleClientSecret string
 	MicrosoftClientID  string
+	// The Dropbox app key. PKCE, so no secret: with it set the Dropbox token endpoints are on.
+	DropboxClientID string
 	// Web push. Without the key pair the push endpoints and the reminder loop are off.
 	VAPIDPublicKey  string
 	VAPIDPrivateKey string
@@ -47,6 +49,7 @@ func Load(getenv func(string) string) (Config, error) {
 		GoogleClientID:     get("GOOGLE_CLIENT_ID", ""),
 		GoogleClientSecret: get("GOOGLE_CLIENT_SECRET", ""),
 		MicrosoftClientID:  get("MICROSOFT_CLIENT_ID", ""),
+		DropboxClientID:    get("DROPBOX_CLIENT_ID", ""),
 		VAPIDPublicKey:     get("VAPID_PUBLIC_KEY", ""),
 		VAPIDPrivateKey:    get("VAPID_PRIVATE_KEY", ""),
 		VAPIDSubject:       get("VAPID_SUBJECT", ""),

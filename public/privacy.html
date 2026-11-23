@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Privacy policy - Doozly</title>
-    <meta name="description" content="How Doozly handles your data: your tasks stay on your device and in your own OneDrive or Google Drive." />
+    <meta name="description" content="How Doozly handles your data: your tasks stay on your device and in your own OneDrive, Google Drive or Dropbox." />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
     <link rel="stylesheet" href="/legal.css" />
   </head>
@@ -15,7 +15,7 @@
       <p class="updated">Last updated 23 November 2026</p>
 
       <div class="summary">
-        <p><strong>The short version.</strong> Your tasks are stored on your device. If you sign in with Microsoft or Google, they are synced to a folder in your own OneDrive or Google Drive that only Doozly uses. Doozly has no server that stores your tasks, and we don't use analytics, ads or trackers.</p>
+        <p><strong>The short version.</strong> Your tasks are stored on your device. If you sign in with Microsoft, Google or Dropbox, they are synced to a folder in your own OneDrive, Google Drive or Dropbox that only Doozly uses. Doozly has no server that stores your tasks, and we don't use analytics, ads or trackers.</p>
       </div>
 
       <p>This policy covers the Doozly app at doozly.app, the Doozly desktop app and the Doozly relay at api.doozly.app. If you use a copy of Doozly that someone else hosts, their own policy applies.</p>
@@ -23,11 +23,12 @@
       <h2>Without an account</h2>
       <p>You can use Doozly without signing in. Your lists, tasks, steps, notes and settings are then stored only in your browser (or in the desktop app's data folder) on your device. We never receive them. Clearing your browser's site data for doozly.app deletes them.</p>
 
-      <h2>When you sign in with Microsoft or Google</h2>
-      <p>Signing in lets Doozly keep a copy of your tasks in your own cloud storage, so they appear on all your devices. Your browser talks to Microsoft or Google directly. Your tasks never pass through a Doozly server.</p>
+      <h2>When you sign in with Microsoft, Google or Dropbox</h2>
+      <p>Signing in lets Doozly keep a copy of your tasks in your own cloud storage, so they appear on all your devices. Your browser talks to Microsoft, Google or Dropbox directly. Your tasks never pass through a Doozly server.</p>
       <ul>
         <li><strong>Microsoft:</strong> Doozly asks for access to its own app folder in your OneDrive (<code>Files.ReadWrite.AppFolder</code>), plus your name and email address to show which account you're signed in with. It cannot see any other files in your OneDrive.</li>
         <li><strong>Google:</strong> Doozly asks for access to its own hidden app data folder in your Google Drive (<code>drive.appdata</code>), plus your name and email address to show which account you're signed in with. It cannot see any other files in your Google Drive.</li>
+        <li><strong>Dropbox:</strong> Doozly asks for access to its own app folder in your Dropbox (<code>Apps/Doozly</code>, to read and write the files in it), plus your name and email address to show which account you're signed in with. It cannot see any other files in your Dropbox.</li>
       </ul>
       <p>Your name and email address are kept on your device only.</p>
 
@@ -39,15 +40,16 @@
       <ul>
         <li><strong>Reminders when the app is closed.</strong> Doozly sends the relay the time of each upcoming reminder, together with its text encrypted on your device. The key to decrypt it never leaves your devices, so the relay can't read your reminders. At the right time the relay sends the encrypted reminder through your browser's push service (run by Google, Mozilla, Apple or Microsoft, depending on your browser), and your device decrypts and shows it.</li>
         <li><strong>Staying signed in with Google.</strong> Google only lets a web app stay signed in if a server holds a secret, so the relay asks Google for a refresh token. That token is encrypted and stored in a cookie in your browser, not on the relay.</li>
+        <li><strong>Staying signed in with Dropbox.</strong> Without the relay a Dropbox sign-in lasts 4 hours. With it, the relay asks Dropbox for a refresh token and keeps it the same way as Google's: encrypted, in a cookie in your browser.</li>
       </ul>
       <p>To do this, the relay stores:</p>
       <ul>
-        <li>an account ID derived from your Microsoft or Google account (it doesn't reveal your email or the provider's own ID),</li>
+        <li>an account ID derived from your Microsoft, Google or Dropbox account (it doesn't reveal your email or the provider's own ID),</li>
         <li>your browser's push subscription (the address and keys your browser's push service gives out),</li>
         <li>your pending reminders: their time and their encrypted text.</li>
       </ul>
       <p>A reminder is deleted once it has been delivered, or an hour after its time if it couldn't be. Signing out removes this device's push subscription. Backups of the relay's database are kept for 14 days.</p>
-      <p>The relay sets two cookies, both used only for signing in: a session cookie (30 days) and, if you sign in with Google, the encrypted refresh token (180 days). The relay's logs don't contain IP addresses, cookies or request contents.</p>
+      <p>The relay sets two cookies, both used only for signing in: a session cookie (30 days) and, if you sign in with Google or Dropbox, the encrypted refresh token (180 days). The relay's logs don't contain IP addresses, cookies or request contents.</p>
 
       <h2>Hosting</h2>
       <p>The website and the relay run with hosting and network providers. Like any website host, they process your IP address and technical request data to deliver the pages and protect them from abuse. We don't use their analytics or anyone else's.</p>
@@ -58,8 +60,8 @@
       <h2>Your choices</h2>
       <ul>
         <li><strong>Delete your tasks on a device:</strong> clear the site data for doozly.app in your browser, or uninstall the desktop app and remove its data.</li>
-        <li><strong>Delete the synced copy:</strong> in OneDrive, delete the <code>Apps/Doozly</code> folder. In Google Drive, open Settings, then Manage apps, find Doozly and choose "Delete hidden app data".</li>
-        <li><strong>Remove Doozly's access:</strong> at <a href="https://account.live.com/consent/Manage">account.live.com/consent/Manage</a> for a personal Microsoft account, <a href="https://myapplications.microsoft.com">myapplications.microsoft.com</a> for a work or school account, or <a href="https://myaccount.google.com/permissions">myaccount.google.com/permissions</a> for Google.</li>
+        <li><strong>Delete the synced copy:</strong> in OneDrive, delete the <code>Apps/Doozly</code> folder. In Google Drive, open Settings, then Manage apps, find Doozly and choose "Delete hidden app data". In Dropbox, delete the <code>Apps/Doozly</code> folder.</li>
+        <li><strong>Remove Doozly's access:</strong> at <a href="https://account.live.com/consent/Manage">account.live.com/consent/Manage</a> for a personal Microsoft account, <a href="https://myapplications.microsoft.com">myapplications.microsoft.com</a> for a work or school account, or <a href="https://myaccount.google.com/permissions">myaccount.google.com/permissions</a> for Google, or <a href="https://www.dropbox.com/account/connected_apps">dropbox.com/account/connected_apps</a> for Dropbox.</li>
         <li><strong>Delete what the relay holds:</strong> signing out stops reminders to that device, and pending reminders are deleted after their time anyway. To have everything removed at once, email us.</li>
       </ul>
       <p>Depending on where you live, you may have further rights over your personal data, such as access, correction and deletion. Email us to use them.</p>

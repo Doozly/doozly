@@ -29,6 +29,7 @@ const KEYCHAIN_SERVICE: &str = "app.doozly.desktop";
 pub enum Kind {
     Google,
     Microsoft,
+    Dropbox,
 }
 
 impl Kind {
@@ -36,6 +37,7 @@ impl Kind {
         match self {
             Kind::Google => "google",
             Kind::Microsoft => "microsoft",
+            Kind::Dropbox => "dropbox",
         }
     }
 }
@@ -79,6 +81,8 @@ pub struct Provider {
     storage_scope: &'static str,
     /// Entra matches "localhost" on any port, Google wants the loopback IP
     redirect_host: &'static str,
+    /// Dropbox matches the redirect URI exactly, so it gets a few registered ports. Empty: any free one.
+    ports: &'static [u16],
 }
 
 impl Provider {
@@ -94,6 +98,7 @@ impl Provider {
                 scopes: "Files.ReadWrite.AppFolder offline_access openid profile",
                 storage_scope: "Files.ReadWrite.AppFolder",
                 redirect_host: "localhost",
+                ports: &[],
             },
             Kind::Google => Self {
                 kind,
@@ -106,6 +111,22 @@ impl Provider {
                 scopes: "https://www.googleapis.com/auth/drive.appdata openid email profile",
                 storage_scope: "https://www.googleapis.com/auth/drive.appdata",
                 redirect_host: "127.0.0.1",
+                ports: &[],
+            },
+            Kind::Dropbox => Self {
+                kind,
+                authorize: "https://www.dropbox.com/oauth2/authorize".into(),
+                token: "https://api.dropboxapi.com/oauth2/token".into(),
+                // Takes the access token and ends its refresh token with it, only this sign-in
+                revoke: Some("https://api.dropboxapi.com/2/auth/token/revoke".into()),
+                client_id: option_env!("DOOZLY_VITE_DROPBOX_CLIENT_ID")?.into(),
+                // PKCE, no secret
+                client_secret: None,
+                scopes: "account_info.read files.metadata.read files.content.read files.content.write openid email profile",
+                storage_scope: "files.content.write",
+                redirect_host: "localhost",
+                // Registered in the Dropbox app as http://localhost:<port>, see .env.example
+                ports: &[38471, 38472, 38473],
             },
         })
     }
@@ -144,9 +165,11 @@ struct Claims {
     email: Option<String>,
     preferred_username: Option<String>,
     name: Option<String>,
+    given_name: Option<String>,
+    family_name: Option<String>,
 }
 
-/// The same ids as on the web: Google's sub, MSAL's home account id (oid.tid)
+/// The same ids as on the web: Google's sub, MSAL's home account id (oid.tid), Dropbox's account id
 fn profile_from(kind: Kind, id_token: &str) -> Result<Profile, AuthError> {
     let bad = || AuthError::Failed("The sign-in answer had no usable ID token".into());
     // Straight from the token endpoint over TLS, so the payload is all we need, no signature check
@@ -156,12 +179,21 @@ fn profile_from(kind: Kind, id_token: &str) -> Result<Profile, AuthError> {
         .map_err(|_| bad())?;
     let c: Claims = serde_json::from_slice(&json).map_err(|_| bad())?;
     let email = c.email.or(c.preferred_username).unwrap_or_default();
+    // Dropbox has no name claim, only its parts
+    let parts = [c.given_name, c.family_name]
+        .into_iter()
+        .flatten()
+        .filter(|n| !n.is_empty())
+        .collect::<Vec<_>>()
+        .join(" ");
     let name = c
         .name
         .filter(|n| !n.is_empty())
+        .or(Some(parts).filter(|n| !n.is_empty()))
         .unwrap_or_else(|| email.clone());
     Ok(match kind {
-        Kind::Google => Profile {
+        // Dropbox's sub is the account id, like get_current_account gives the web
+        Kind::Google | Kind::Dropbox => Profile {
             id: c.sub.ok_or_else(bad)?,
             email,
             name,
@@ -222,12 +254,20 @@ async fn post_token(
     }
 }
 
-/// Both loopbacks on one port: browsers may try ::1 first for "localhost"
-async fn listen() -> std::io::Result<(TcpListener, Option<TcpListener>, u16)> {
-    let v4 = TcpListener::bind(("127.0.0.1", 0)).await?;
-    let port = v4.local_addr()?.port();
-    let v6 = TcpListener::bind(("::1", port)).await.ok();
-    Ok((v4, v6, port))
+/// Both loopbacks on one port: browsers may try ::1 first for "localhost". With fixed ports the first free one.
+async fn listen(ports: &[u16]) -> std::io::Result<(TcpListener, Option<TcpListener>, u16)> {
+    let mut last = None;
+    for &port in if ports.is_empty() { &[0] } else { ports } {
+        match TcpListener::bind(("127.0.0.1", port)).await {
+            Ok(v4) => {
+                let port = v4.local_addr()?.port();
+                let v6 = TcpListener::bind(("::1", port)).await.ok();
+                return Ok((v4, v6, port));
+            }
+            Err(e) => last = Some(e),
+        }
+    }
+    Err(last.expect("tried at least one port"))
 }
 
 async fn accept(v4: &TcpListener, v6: Option<&TcpListener>) -> std::io::Result<TcpStream> {
@@ -340,7 +380,7 @@ async fn authorize(
     open: impl FnOnce(&Url) -> Result<(), String>,
     cancel: oneshot::Receiver<()>,
 ) -> Result<(Saved, TokenResponse), AuthError> {
-    let (v4, v6, port) = listen()
+    let (v4, v6, port) = listen(p.ports)
         .await
         .map_err(|e| AuthError::Failed(e.to_string()))?;
     let redirect = format!("http://{}:{port}", p.redirect_host);
@@ -364,6 +404,9 @@ async fn authorize(
         Kind::Microsoft => url
             .query_pairs_mut()
             .append_pair("prompt", "select_account"),
+        Kind::Dropbox => url
+            .query_pairs_mut()
+            .append_pair("token_access_type", "offline"),
     };
     open(&url).map_err(AuthError::Failed)?;
 
@@ -582,17 +625,23 @@ impl Auth {
     }
 
     async fn sign_out_with(&self, p: &Provider) {
+        // Dropbox revokes with an access token, so get one while the refresh token is still here
+        let bearer = match p.kind {
+            Kind::Dropbox => self.token_with(p).await.ok(),
+            _ => None,
+        };
         self.cache.lock().await.remove(&p.kind);
         let saved = self.load(p.kind).await;
         self.forget(p.kind).await;
-        if let (Some(url), Some(saved)) = (&p.revoke, saved) {
-            let _ = self
-                .http
-                .post(url)
-                .form(&[("token", saved.refresh_token)])
-                .send()
-                .await;
-        }
+        let (Some(url), Some(saved)) = (&p.revoke, saved) else {
+            return;
+        };
+        let request = match bearer {
+            Some(bearer) => self.http.post(url).bearer_auth(bearer),
+            None if p.kind == Kind::Dropbox => return,
+            None => self.http.post(url).form(&[("token", saved.refresh_token)]),
+        };
+        let _ = request.send().await;
     }
 }
 
@@ -742,6 +791,7 @@ mod tests {
             } else {
                 "localhost"
             },
+            ports: &[],
         }
     }
 
@@ -806,6 +856,18 @@ mod tests {
             id_token(serde_json::json!({"sub": "123", "email": "sam@example.com", "name": "Sam"}));
         assert_eq!(profile_from(Kind::Google, &g).unwrap().id, "123");
         assert!(profile_from(Kind::Google, "garbage").is_err());
+        let d = id_token(
+            serde_json::json!({"sub": "dbid:AAH4", "email": "sam@example.com", "given_name": "Sam", "family_name": "Lee"}),
+        );
+        assert_eq!(
+            profile_from(Kind::Dropbox, &d).unwrap(),
+            Profile {
+                id: "dbid:AAH4".into(),
+                email: "sam@example.com".into(),
+                name: "Sam Lee".into(),
+                work: None
+            }
+        );
     }
 
     #[test]
@@ -826,6 +888,20 @@ mod tests {
             None,
             "https://www.googleapis.com/auth/drive.appdata"
         ));
+    }
+
+    #[tokio::test]
+    async fn fixed_ports_go_to_the_next_one_when_taken() {
+        let taken = TcpListener::bind(("127.0.0.1", 0)).await.unwrap();
+        let busy = taken.local_addr().unwrap().port();
+        let free = {
+            let l = TcpListener::bind(("127.0.0.1", 0)).await.unwrap();
+            l.local_addr().unwrap().port()
+        };
+        let (_, _, port) = listen(&[busy, free]).await.unwrap();
+        assert_eq!(port, free);
+        assert!(listen(&[busy]).await.is_err());
+        assert_ne!(listen(&[]).await.unwrap().2, 0);
     }
 
     #[tokio::test]

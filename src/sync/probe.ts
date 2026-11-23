@@ -1,3 +1,5 @@
+import { createDropboxAuth } from "./dropbox/auth.ts";
+import { createDropboxProvider } from "./dropbox/dropboxProvider.ts";
 import { createGoogleAuth } from "./google/auth.ts";
 import {
   createDriveProvider,
@@ -81,7 +83,7 @@ async function conformance(provider: StorageProvider, say: Say) {
   const gone = (await provider.read(a))?.etag;
   await provider.delete(a);
   check((await provider.read(a)) === null, "a deleted file reads as gone");
-  // Drive calls this a conflict, OneDrive makes the file again. Either is fine, nothing may be lost.
+  // Drive and Dropbox call this a conflict, OneDrive makes the file again. Either is fine, nothing may be lost.
   const conflicted = await conflict(provider.write(a, bytes('{"n":3}'), gone));
   const again = text((await provider.read(a))?.data);
   check(
@@ -216,15 +218,43 @@ async function microsoft(clientId: string, say: Say) {
   }
 }
 
+async function dropbox(clientId: string, say: Say) {
+  const { check, info } = reporter(say);
+  // No relay: a 4 hour token is plenty, and the probe's sign-in stays out of the app's
+  const auth = createDropboxAuth({ clientId });
+  const account = await auth.signIn();
+  info(`signed in as ${account.email}`);
+  const provider = createDropboxProvider({ token: auth.token });
+  info(`app folder holds ${(await provider.list()).length} file(s)`);
+
+  try {
+    await conformance(provider, say);
+    // Dropbox keeps cursors, so one from an earlier instance must still work
+    const { token } = await provider.changesSince();
+    const other = createDropboxProvider({ token: auth.token });
+    check(
+      Array.isArray((await other.changesSince(token)).changed),
+      "a change token works in another instance",
+    );
+  } finally {
+    await cleanUp(provider, say);
+    await auth.signOut();
+  }
+}
+
+const probes = { google, microsoft, dropbox };
+
 export function mountSyncProbe(root: HTMLElement) {
   const ids = {
     google: import.meta.env.VITE_GOOGLE_CLIENT_ID,
     microsoft: import.meta.env.VITE_MICROSOFT_CLIENT_ID,
+    dropbox: import.meta.env.VITE_DROPBOX_CLIENT_ID,
   };
   root.innerHTML = `<main style="font: 14px/1.5 monospace; padding: 16px">
     <h1>Sync probe</h1>
     <button type="button" data-run="google">Google Drive</button>
     <button type="button" data-run="microsoft">OneDrive</button>
+    <button type="button" data-run="dropbox">Dropbox</button>
     <pre></pre></main>`;
   const out = root.querySelector("pre") as HTMLPreElement;
   const say = (line: string) => {
@@ -244,7 +274,7 @@ export function mountSyncProbe(root: HTMLElement) {
     button.onclick = () => {
       button.disabled = true;
       out.textContent = "";
-      (which === "google" ? google : microsoft)(clientId, say)
+      probes[which](clientId, say)
         .then(() => say("done"))
         .catch((err: unknown) => say(`ERROR ${String(err)}`))
         .finally(() => {

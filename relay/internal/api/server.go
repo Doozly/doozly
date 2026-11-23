@@ -23,6 +23,8 @@ type Options struct {
 	Sessions Sessions
 	// nil when there's no Google client secret, then the Google endpoints aren't there
 	Google GoogleTokens
+	// nil when there's no Dropbox client ID, the same
+	Dropbox DropboxTokens
 	// Both or neither. Without a VAPID key there's no push, and its endpoints aren't there.
 	Push           PushStore
 	VAPIDPublicKey string
@@ -37,6 +39,7 @@ type server struct {
 	perIP   *limiter
 	perUser *limiter
 	sealer  *sealer
+	dropbox *sealer
 }
 
 type ctxKey int
@@ -64,7 +67,7 @@ func New(o Options) http.Handler {
 	mux.HandleFunc("DELETE /v1/session", s.deleteSession)
 	mux.Handle("GET /v1/session", s.signedIn(http.HandlerFunc(s.getSession)))
 	if o.Google != nil {
-		sealer, err := newSealer(o.Sessions.Key)
+		sealer, err := newGoogleSealer(o.Sessions.Key)
 		if err != nil {
 			panic(err)
 		}
@@ -72,6 +75,16 @@ func New(o Options) http.Handler {
 		mux.HandleFunc("POST /v1/auth/google/token", s.googleToken)
 		mux.HandleFunc("POST /v1/auth/google/refresh", s.googleRefresh)
 		mux.HandleFunc("DELETE /v1/auth/google", s.googleSignOut)
+	}
+	if o.Dropbox != nil {
+		sealer, err := newDropboxSealer(o.Sessions.Key)
+		if err != nil {
+			panic(err)
+		}
+		s.dropbox = sealer
+		mux.HandleFunc("POST /v1/auth/dropbox/token", s.dropboxToken)
+		mux.HandleFunc("POST /v1/auth/dropbox/refresh", s.dropboxRefresh)
+		mux.HandleFunc("DELETE /v1/auth/dropbox", s.dropboxSignOut)
 	}
 	if o.Push != nil && o.VAPIDPublicKey != "" {
 		mux.HandleFunc("GET /v1/push/key", s.pushKey)
@@ -106,7 +119,7 @@ func (s *server) healthz(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, map[string]string{"status": "ok"})
 }
 
-// POST /v1/session {"provider": "google"|"microsoft", "idToken": "..."} swaps a provider's ID token for our cookie
+// POST /v1/session {"provider": "google"|"microsoft"|"dropbox", "idToken": "..."} swaps a provider's ID token for our cookie
 func (s *server) createSession(w http.ResponseWriter, r *http.Request) {
 	var body struct {
 		Provider string `json:"provider"`

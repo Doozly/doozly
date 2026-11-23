@@ -4,12 +4,20 @@ import type { IconName } from "../../ui/Icon.tsx";
 export const providerNames: Record<ProviderKind, string> = {
   google: "Google",
   microsoft: "Microsoft",
+  dropbox: "Dropbox",
 };
 
 export const storageNames: Record<ProviderKind, string> = {
   google: "Google Drive",
   microsoft: "OneDrive",
+  dropbox: "Dropbox",
 };
+
+/** "OneDrive, Google Drive or Dropbox" */
+export const storageList = (kinds: readonly ProviderKind[]) =>
+  new Intl.ListFormat("en-GB", { type: "disjunction" }).format(
+    kinds.map((k) => storageNames[k]),
+  );
 
 export interface SyncMessage {
   icon: IconName;

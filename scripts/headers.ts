@@ -36,6 +36,9 @@ export function cspDirectives(relayUrl?: string): Record<string, string[]> {
       "https://*.1drv.com",
       "https://*.microsoftpersonalcontent.com",
       "https://*.sharepoint.com",
+      // Dropbox's token, account and file endpoints
+      "https://api.dropboxapi.com",
+      "https://content.dropboxapi.com",
     ],
     // GIS's own frames, and MSAL's hidden one for silent sign-in
     "frame-src": [

@@ -1,6 +1,7 @@
 import { createStore } from "zustand/vanilla";
 import { INBOX_ID } from "../data/model.ts";
 import type { App } from "../state/store.ts";
+import { createDropboxProvider } from "./dropbox/dropboxProvider.ts";
 import {
   createSyncEngine,
   type SyncEngine,
@@ -14,7 +15,7 @@ import {
   type StorageProvider,
 } from "./provider.ts";
 
-export type ProviderKind = "google" | "microsoft";
+export type ProviderKind = "google" | "microsoft" | "dropbox";
 
 export interface Account {
   provider: ProviderKind;
@@ -27,7 +28,7 @@ export interface Account {
 
 type Profile = Omit<Account, "provider">;
 
-/** What the session needs from Google's or Microsoft's sign-in */
+/** What the session needs from a provider's sign-in */
 export interface AccountAuth {
   signIn(): Promise<Profile>;
   token(): Promise<string>;
@@ -69,9 +70,9 @@ const ownerOf = (a: Account) => `${a.provider}:${a.id}`;
 
 function defaultProvider(kind: ProviderKind, auth: AccountAuth) {
   const options = { token: auth.token, onUnauthorized: auth.expire };
-  return kind === "google"
-    ? createDriveProvider(options)
-    : createOneDriveProvider(options);
+  if (kind === "google") return createDriveProvider(options);
+  if (kind === "dropbox") return createDropboxProvider(options);
+  return createOneDriveProvider(options);
 }
 
 /** Anything the user made here, beyond the empty Tasks list every device has */
@@ -190,14 +191,16 @@ export function createSession({
     if (next && now && ownerOf(next) === ownerOf(now)) return;
     stopSync();
     state.setState({ account: next });
-    // Microsoft's tokens are shared between tabs, so this tab can stand by. Google's aren't.
+    // Microsoft's tokens are shared between tabs, so this tab can stand by. Google's and Dropbox's aren't.
     if (next?.provider === "microsoft") startSync(next, false);
   }
 
   return {
     state,
     /** The sign-ins that are set up, in the order to offer them. Microsoft first, most people come from To Do. */
-    providers: (["microsoft", "google"] as const).filter((k) => auths[k]),
+    providers: (["microsoft", "google", "dropbox"] as const).filter(
+      (k) => auths[k],
+    ),
 
     /** Picks up the account from last time and starts syncing if it can */
     async start() {
@@ -226,7 +229,7 @@ export function createSession({
           return;
         }
       }
-      // Without a relay Google's token went with the last page. The engine then asks for a sign-in, unless another tab syncs.
+      // Without a relay Google's and Dropbox's token went with the last page. The engine then asks for a sign-in, unless another tab syncs.
       startSync(saved, false);
     },
 

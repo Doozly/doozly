@@ -3,7 +3,7 @@ import type { ProviderKind } from "../../sync/session.ts";
 import styles from "./ProviderButton.module.css";
 import { providerNames } from "./syncMessage.ts";
 
-// Both logos as the providers ship them, see their sign-in branding guidelines.
+// The logos as the providers ship them, see their branding guidelines.
 // Google's G is rendered from their asset bundle, its SVG needs inline styles the CSP doesn't allow.
 function ProviderLogo({ kind }: { kind: ProviderKind }) {
   if (kind === "google") {
@@ -15,6 +15,22 @@ function ProviderLogo({ kind }: { kind: ProviderKind }) {
         height={20}
         alt=""
       />
+    );
+  }
+  if (kind === "dropbox") {
+    return (
+      <svg
+        className={styles.logo}
+        width={20}
+        height={20}
+        viewBox="0 0 24 24"
+        aria-hidden
+      >
+        <path
+          fill="#0061ff"
+          d="M6 1.807L0 5.629l6 3.822 6.001-3.822L6 1.807zM18 1.807l-6 3.822 6 3.822 6-3.822-6-3.822zM0 13.274l6 3.822 6.001-3.822L6 9.452l-6 3.822zM18 9.452l-6 3.822 6 3.822 6-3.822-6-3.822zM6 18.371l6.001 3.822 6-3.822-6-3.822L6 18.371z"
+        />
+      </svg>
     );
   }
   return (

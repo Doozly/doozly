@@ -1,6 +1,6 @@
 # Doozly
 
-A local-first to-do app for the web and desktop. Your tasks live in your browser, and sync through your own Google Drive or OneDrive. There is no Doozly server holding your data.
+A local-first to-do app for the web and desktop. Your tasks live in your browser, and sync through your own OneDrive, Google Drive or Dropbox. There is no Doozly server holding your data.
 
 Doozly is modelled on the layout and behaviour of Microsoft To Do. It is an independent project and is not affiliated with or endorsed by Microsoft.
 

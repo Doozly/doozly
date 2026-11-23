@@ -27,11 +27,15 @@ const refreshPath = "/v1/auth/google"
 // Refresh tokens of published apps last until revoked; the cookie gives up a bit earlier
 const refreshTTL = 180 * 24 * time.Hour
 
-// sealer encrypts the refresh token for the cookie, so a copied cookie jar doesn't hand it out in clear
-type sealer struct{ aead cipher.AEAD }
+// sealer encrypts a refresh token for its cookie, so a copied cookie jar doesn't hand it out in clear.
+// Each cookie has its own key and the cookie name as associated data, so one can't stand in for another.
+type sealer struct {
+	aead cipher.AEAD
+	aad  []byte
+}
 
-func newSealer(sessionKey []byte) (*sealer, error) {
-	key, err := hkdf.Key(sha256.New, sessionKey, nil, "doozly google refresh cookie", 32)
+func newSealer(sessionKey []byte, purpose, cookie string) (*sealer, error) {
+	key, err := hkdf.Key(sha256.New, sessionKey, nil, purpose, 32)
 	if err != nil {
 		return nil, err
 	}
@@ -43,13 +47,17 @@ func newSealer(sessionKey []byte) (*sealer, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &sealer{aead: aead}, nil
+	return &sealer{aead: aead, aad: []byte(cookie)}, nil
+}
+
+func newGoogleSealer(sessionKey []byte) (*sealer, error) {
+	return newSealer(sessionKey, "doozly google refresh cookie", refreshCookie)
 }
 
 func (s *sealer) seal(plain string) string {
 	nonce := make([]byte, s.aead.NonceSize())
 	rand.Read(nonce)
-	return b64.EncodeToString(s.aead.Seal(nonce, nonce, []byte(plain), []byte(refreshCookie)))
+	return b64.EncodeToString(s.aead.Seal(nonce, nonce, []byte(plain), s.aad))
 }
 
 func (s *sealer) open(sealed string) (string, bool) {
@@ -58,7 +66,7 @@ func (s *sealer) open(sealed string) (string, bool) {
 		return "", false
 	}
 	nonce, box := raw[:s.aead.NonceSize()], raw[s.aead.NonceSize():]
-	plain, err := s.aead.Open(nil, nonce, box, []byte(refreshCookie))
+	plain, err := s.aead.Open(nil, nonce, box, s.aad)
 	return string(plain), err == nil
 }
 

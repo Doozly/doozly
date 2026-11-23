@@ -7,7 +7,7 @@
   src: url("/fonts/google-sans-500-signin.woff2") format("woff2");
 }
 
-/* Same size for both, Google asks for equal prominence */
+/* Same size for all, Google asks for equal prominence */
 .button {
   display: inline-flex;
   gap: 12px;
@@ -43,6 +43,14 @@
   font:
     600 15px / 20px "Segoe UI",
     var(--font-family);
+}
+
+/* Dropbox has no sign-in button of its own: the glyph in Dropbox blue on a plain button like the others */
+.dropbox {
+  border-color: light-dark(#8c8c8c, #5f5f5f);
+  background: light-dark(#ffffff, #1e1919);
+  color: light-dark(#1e1919, #f7f5f2);
+  font: 600 15px / 20px var(--font-family);
 }
 
 .button[data-hovered] {
