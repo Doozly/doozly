@@ -54,6 +54,12 @@ async function start(root: HTMLElement) {
         </StrictMode>,
       );
     render(null);
+    // Only a `--features smoke` build of the desktop app sets it, for CI
+    if (isDesktop() && "__DOOZLY_SMOKE__" in window) {
+      void import("./app/desktop/smoke.ts").then(({ runSmoke }) =>
+        runSmoke(app, actions),
+      );
+    }
     // The tasks are all here already, sign-in and sync can come a moment after
     import("./sync/start.ts").then(
       ({ startSession }) => render(startSession(app)),

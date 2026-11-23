@@ -40,6 +40,8 @@ fn main() {
         "drop_access_token",
         "restored_account",
         "sign_out",
+        // Only a --features smoke build grants it, at runtime (src/smoke.rs)
+        "smoke_report",
     ]);
     tauri_build::try_build(tauri_build::Attributes::new().app_manifest(manifest))
         .expect("tauri-build failed");

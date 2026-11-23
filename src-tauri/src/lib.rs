@@ -4,6 +4,7 @@ mod guard;
 mod policy;
 mod quick;
 mod reminders;
+mod smoke;
 mod update;
 
 use std::sync::Arc;
@@ -53,7 +54,7 @@ fn open(app: &AppHandle, path: &str) {
 }
 
 pub fn run() {
-    let app = tauri::Builder::default()
+    let builder = tauri::Builder::default()
         // First, so a second launch only brings the running one forward
         .plugin(tauri_plugin_single_instance::init(|app, _args, _cwd| {
             desktop::show(app)
@@ -72,7 +73,8 @@ pub fn run() {
         )
         .plugin(quick::plugin())
         .plugin(tauri_plugin_opener::init())
-        .plugin(guard::plugin())
+        .plugin(guard::plugin());
+    let app = smoke::add(builder)
         .manage(auth::Auth::new(Arc::new(auth::Keychain::default())))
         .plugin(tauri_plugin_updater::Builder::new().build())
         .invoke_handler(tauri::generate_handler![
@@ -89,6 +91,7 @@ pub fn run() {
             auth::drop_access_token,
             auth::restored_account,
             auth::sign_out,
+            smoke::smoke_report,
         ])
         .on_window_event(|window, event| {
             desktop::on_window_event(window, event);
