@@ -55,8 +55,7 @@
   color: var(--color-danger);
 }
 
-.start,
-.provider {
+.start {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -86,21 +85,7 @@
   background: var(--accent-pressed);
 }
 
-.provider[data-hovered] {
-  background: var(--color-surface-hover);
-}
-
-.provider[data-pressed] {
-  background: var(--color-surface-pressed);
-}
-
-.provider[data-disabled] {
-  opacity: 0.5;
-  cursor: default;
-}
-
-.start[data-focus-visible],
-.provider[data-focus-visible] {
+.start[data-focus-visible] {
   outline: 2px solid var(--color-focus);
   outline-offset: 2px;
 }

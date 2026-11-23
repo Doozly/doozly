@@ -2,9 +2,10 @@ import { useEffect } from "react";
 import { Button } from "react-aria-components";
 import type { ProviderKind } from "../../sync/session.ts";
 import { Logo } from "../../ui/Logo.tsx";
+import { ProviderButton } from "../account/ProviderButton.tsx";
 import { useSession } from "../account/SessionContext.tsx";
 import { useConfirmMerge, useSignIn } from "../account/signIn.tsx";
-import { providerNames, storageNames } from "../account/syncMessage.ts";
+import { storageNames } from "../account/syncMessage.ts";
 import styles from "./Landing.module.css";
 
 // Microsoft first, most people come here from To Do
@@ -45,16 +46,13 @@ export function Landing({ onDone }: { onDone: () => void }) {
               <span>Or sync across your devices</span>
             </h2>
             {providers.map((kind) => (
-              <Button
+              <ProviderButton
                 key={kind}
-                className={styles.provider}
+                kind={kind}
+                signingIn={signingIn === kind}
                 isDisabled={signingIn !== null}
                 onPress={() => signIn(kind)}
-              >
-                {signingIn === kind
-                  ? "Signing in…"
-                  : `Sign in with ${providerNames[kind]}`}
-              </Button>
+              />
             ))}
             {error && (
               <p className={styles.error} role="alert">

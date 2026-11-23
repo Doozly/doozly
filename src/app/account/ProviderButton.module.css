@@ -1,0 +1,65 @@
+/* Only the letters of the button, see public/third-party-notices.txt */
+@font-face {
+  font-family: "Google Sans";
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url("/fonts/google-sans-500-signin.woff2") format("woff2");
+}
+
+/* Same size for both, Google asks for equal prominence */
+.button {
+  display: inline-flex;
+  gap: 12px;
+  align-items: center;
+  justify-content: center;
+  min-height: 41px;
+  padding: 0 12px;
+  border: 1px solid transparent;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+}
+
+.logo {
+  flex: none;
+}
+
+/* Google's light and dark button: fill, 1px stroke inside, Google Sans Medium 14/20, 10px after the G */
+.google {
+  gap: 10px;
+  border-color: light-dark(#747775, #8e918f);
+  background: light-dark(#ffffff, #131314);
+  color: light-dark(#1f1f1f, #e3e3e3);
+  font:
+    500 14px / 20px "Google Sans",
+    var(--font-family);
+}
+
+/* Microsoft's light and dark button: 41px high, 12px around the logo, Segoe UI Semibold 15px */
+.microsoft {
+  border-color: light-dark(#8c8c8c, #2f2f2f);
+  background: light-dark(#ffffff, #2f2f2f);
+  color: light-dark(#5e5e5e, #ffffff);
+  font:
+    600 15px / 20px "Segoe UI",
+    var(--font-family);
+}
+
+.button[data-hovered] {
+  filter: brightness(0.96);
+}
+
+.button[data-pressed] {
+  filter: brightness(0.92);
+}
+
+.button[data-disabled] {
+  opacity: 0.5;
+  cursor: default;
+  filter: none;
+}
+
+.button[data-focus-visible] {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 2px;
+}

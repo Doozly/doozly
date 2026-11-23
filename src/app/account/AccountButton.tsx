@@ -11,9 +11,10 @@ import type { Account } from "../../sync/session.ts";
 import { Icon } from "../../ui/Icon.tsx";
 import { useRelay } from "../reminders/useRelay.ts";
 import styles from "./AccountButton.module.css";
+import { ProviderButton } from "./ProviderButton.tsx";
 import { useSession, useSessionState } from "./SessionContext.tsx";
 import { type ConfirmMerge, useConfirmMerge, useSignIn } from "./signIn.tsx";
-import { providerNames, storageNames, syncMessage } from "./syncMessage.ts";
+import { storageNames, syncMessage } from "./syncMessage.ts";
 
 const initials = (name: string) =>
   name
@@ -84,16 +85,13 @@ function SignedOut({ confirmMerge }: { confirmMerge: ConfirmMerge }) {
         kept in your own Google Drive or OneDrive, in a folder only Doozly uses.
       </p>
       {session?.providers.map((kind) => (
-        <Button
+        <ProviderButton
           key={kind}
-          className={styles.primary}
+          kind={kind}
+          signingIn={signingIn === kind}
           isDisabled={signingIn !== null}
           onPress={() => signIn(kind)}
-        >
-          {signingIn === kind
-            ? "Signing in…"
-            : `Sign in with ${providerNames[kind]}`}
-        </Button>
+        />
       ))}
       {error && (
         <p className={styles.error} role="alert">
