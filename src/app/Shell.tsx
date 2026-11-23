@@ -15,7 +15,6 @@ import { animateRows } from "../ui/motion.ts";
 import { preloadable } from "../ui/preloadable.tsx";
 import { NARROW, useMediaQuery } from "../ui/useMediaQuery.ts";
 import { useToday } from "../ui/useToday.ts";
-import { AccountButton } from "./account/AccountButton.tsx";
 import { DragAndDrop } from "./dnd/DragAndDrop.tsx";
 import { ListPane } from "./ListPane.tsx";
 import { paths, useSelection } from "./routes.ts";
@@ -44,6 +43,11 @@ export const DetailPane = preloadable(() =>
   import("./DetailPane.tsx").then((m) => m.DetailPane),
 );
 
+// Shows nothing before sync has loaded anyway, so it needn't be in the first load
+export const AccountButton = preloadable(() =>
+  import("./account/AccountButton.tsx").then((m) => m.AccountButton),
+);
+
 export function Shell() {
   const { listId, taskId } = useSelection();
   const [, navigate] = useLocation();
@@ -69,7 +73,10 @@ export function Shell() {
   const shortcuts = useShortcuts();
   useEffect(() => {
     const idle = window.requestIdleCallback ?? setTimeout;
-    idle(() => void DetailPane.preload());
+    idle(() => {
+      void DetailPane.preload();
+      void AccountButton.preload();
+    });
   }, []);
 
   const view = searching
@@ -109,7 +116,9 @@ export function Shell() {
               setSettingsOpen(true);
             }}
           />
-          <AccountButton />
+          <Suspense fallback={null}>
+            <AccountButton />
+          </Suspense>
         </div>
       </header>
       {shortcuts.element}

@@ -7,6 +7,7 @@ import { App } from "../App.tsx";
 import { AppProvider } from "../state/AppContext.tsx";
 import { setting } from "../state/actions.ts";
 import { testApp } from "../test/app.ts";
+import { AccountButton } from "./Shell.tsx";
 import { applyTheme, THEME_KEY } from "./theme.ts";
 
 afterEach(() => {
@@ -16,6 +17,8 @@ afterEach(() => {
 });
 
 async function renderApp() {
+  // Like the idle preload in the real app, so it isn't still loading mid-test
+  await AccountButton.preload();
   const t = await testApp();
   render(
     <AppProvider value={{ app: t.app, actions: t.actions }}>

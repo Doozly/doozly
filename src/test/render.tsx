@@ -4,7 +4,7 @@ import { memoryLocation } from "wouter/memory-location";
 import { App } from "../App.tsx";
 import { SessionProvider } from "../app/account/SessionContext.tsx";
 import { ThemePicker } from "../app/lists/useListMenu.tsx";
-import { DetailPane } from "../app/Shell.tsx";
+import { AccountButton, DetailPane } from "../app/Shell.tsx";
 import { AppProvider } from "../state/AppContext.tsx";
 import type { Actions } from "../state/actions.ts";
 import type { App as AppStore } from "../state/store.ts";
@@ -22,6 +22,7 @@ export async function renderApp(
   // Loaded up front, like the idle preload does in the real app
   await Promise.all([
     DetailPane.preload(),
+    AccountButton.preload(),
     preloadContextMenu(),
     preloadMenuButton(),
     ThemePicker.preload(),
