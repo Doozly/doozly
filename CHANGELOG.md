@@ -4,6 +4,8 @@ What's new in each desktop release. The web app updates itself and isn't version
 
 ## Unreleased
 
+## 0.1.1 (2026-11-23)
+
 - Print a list, or email it, from the list's menu.
 - The GitHub, privacy and terms links in Settings open in your browser. Links never open inside the Doozly window.
 - On Linux the quick add box is a slim bar, like on the other systems, not a tall box.
