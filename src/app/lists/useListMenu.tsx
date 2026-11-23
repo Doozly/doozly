@@ -2,13 +2,15 @@ import { Suspense, useState } from "react";
 import { useLocation } from "wouter";
 import { useShallow } from "zustand/react/shallow";
 import { INBOX_ID, type List, type ListGroup } from "../../data/model.ts";
-import { useActions, useAppState } from "../../state/AppContext.tsx";
+import { useActions, useApp, useAppState } from "../../state/AppContext.tsx";
+import { setting } from "../../state/actions.ts";
 import { byPosition } from "../../state/position.ts";
 import { ConfirmDialog } from "../../ui/ConfirmDialog.tsx";
 import { ContextMenu, type MenuEntry } from "../../ui/ContextMenu.tsx";
 import { preloadable } from "../../ui/preloadable.tsx";
 import { paths } from "../routes.ts";
 import { useUi } from "../uiStore.ts";
+import { emailLink, listContent } from "./listText.ts";
 
 // Only there once someone picks "Change theme"
 export const ThemePicker = preloadable(() =>
@@ -21,11 +23,16 @@ function entriesFor(list: List, groups: ListGroup[]): MenuEntry[] {
     label: "Change theme",
     icon: "theme",
   };
+  const out: MenuEntry[] = [
+    { id: "print", label: "Print list", icon: "print", separated: true },
+    { id: "email", label: "Email list", icon: "email" },
+  ];
   // The built-in Tasks list can't be renamed, moved or deleted, like in To Do
   if (list.id === INBOX_ID) {
     return [
       theme,
       { id: "duplicate", label: "Duplicate list", icon: "duplicate" },
+      ...out,
     ];
   }
   const moves: MenuEntry[] = groups
@@ -43,6 +50,7 @@ function entriesFor(list: List, groups: ListGroup[]): MenuEntry[] {
     { id: "rename", label: "Rename list", icon: "rename" },
     theme,
     { id: "duplicate", label: "Duplicate list", icon: "duplicate" },
+    ...out,
     ...moves,
     {
       id: "delete",
@@ -69,6 +77,7 @@ export function useListMenu({ onDone }: { onDone?: () => void } = {}) {
     y: number;
   } | null>(null);
   const actions = useActions();
+  const app = useApp();
   const [, navigate] = useLocation();
   const setRenaming = useUi((s) => s.setRenaming);
   const groups = useAppState(
@@ -89,6 +98,17 @@ export function useListMenu({ onDone }: { onDone?: () => void } = {}) {
       const copy = actions.duplicateList(list.id);
       if (copy) navigate(paths.list(copy.id));
       onDone?.();
+    }
+    if (id === "print" || id === "email") {
+      const s = app.store.getState();
+      const content = listContent(list, {
+        tasks: s.tasks,
+        steps: s.steps,
+        starredFirst: setting(s, "moveStarredToTop"),
+      });
+      // On desktop the window keeps to the app, Rust hands mailto: to the mail app
+      if (id === "email") location.href = emailLink(content);
+      else void import("./printList.ts").then((m) => m.printList(content));
     }
     if (id === "delete") setToDelete(list);
     if (id === "theme") setTheming({ listId: list.id, ...at });

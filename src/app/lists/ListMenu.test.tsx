@@ -1,6 +1,6 @@
 import { fireEvent, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { beforeEach, expect, test } from "vitest";
+import { beforeEach, expect, test, vi } from "vitest";
 import { renderApp } from "../../test/render.tsx";
 import { useUi } from "../uiStore.ts";
 
@@ -52,14 +52,19 @@ test("clicking the title renames, Escape cancels, empty keeps the old name", asy
   expect(heading()).toHaveTextContent("Groceries");
 });
 
-test("the Tasks list can't be renamed or deleted, only themed and duplicated", async () => {
+test("the Tasks list can't be renamed or deleted, only themed, duplicated, printed and sent", async () => {
   await renderApp();
   expect(within(heading()).queryByRole("button", { name: "Tasks" })).toBeNull();
   fireEvent.contextMenu(sidebarLink("Tasks"));
   const items = (await screen.findAllByRole("menuitem")).map(
     (i) => i.textContent,
   );
-  expect(items).toEqual(["Change theme", "Duplicate list"]);
+  expect(items).toEqual([
+    "Change theme",
+    "Duplicate list",
+    "Print list",
+    "Email list",
+  ]);
 });
 
 test("duplicate from the list options opens the copy with its tasks", async () => {
@@ -110,4 +115,30 @@ test("Shift+F10 on a sidebar list opens its menu", async () => {
   expect(
     await screen.findByRole("menu", { name: "Options for Groceries" }),
   ).toBeVisible();
+});
+
+test("Print list prints the list on its own, with its tasks", async () => {
+  const print = vi.spyOn(window, "print").mockImplementation(() => {});
+  await renderApp("/lists/inbox", (a) => {
+    const list = a.addList("Groceries");
+    a.addTask(list.id, "Milk");
+    const done = a.addTask(list.id, "Eggs");
+    if (done) a.toggleCompleted(done.id);
+  });
+  fireEvent.contextMenu(
+    within(sidebar()).getByRole("link", { name: /^Groceries/ }),
+  );
+  expect(
+    await screen.findByRole("menuitem", { name: "Email list" }),
+  ).toBeInTheDocument();
+  await pick("Print list");
+
+  await waitFor(() => expect(print).toHaveBeenCalledOnce());
+  const sheet = document.getElementById("print-root");
+  expect(sheet?.querySelector("h1")).toHaveTextContent("Groceries");
+  expect(sheet).toHaveTextContent("☐Milk");
+  expect(sheet).toHaveTextContent("Completed☑Eggs");
+  window.dispatchEvent(new Event("afterprint"));
+  expect(document.getElementById("print-root")).toBeNull();
+  print.mockRestore();
 });

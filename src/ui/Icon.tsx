@@ -20,6 +20,7 @@ import cloudSlash from "@phosphor-icons/core/regular/cloud-slash.svg?raw";
 import copy from "@phosphor-icons/core/regular/copy.svg?raw";
 import dotsThree from "@phosphor-icons/core/regular/dots-three.svg?raw";
 import downloadSimple from "@phosphor-icons/core/regular/download-simple.svg?raw";
+import envelopeSimple from "@phosphor-icons/core/regular/envelope-simple.svg?raw";
 import folderSimple from "@phosphor-icons/core/regular/folder-simple.svg?raw";
 import folderSimplePlus from "@phosphor-icons/core/regular/folder-simple-plus.svg?raw";
 import gear from "@phosphor-icons/core/regular/gear.svg?raw";
@@ -91,6 +92,7 @@ const regular = {
   duplicate: copy,
   rename: pencilSimple,
   print: printer,
+  email: envelopeSimple,
   share: shareNetwork,
   account: userCircle,
   signOut,

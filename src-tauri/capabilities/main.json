@@ -1,7 +1,7 @@
 {
   "$schema": "../gen/schemas/desktop-schema.json",
   "identifier": "main",
-  "description": "Only what the SPA uses: reminders, the desktop settings, installing a downloaded update, signing in with a provider in the system browser, and hearing what a notification, the tray or a menu asks for. Add permissions one by one as desktop features need them.",
+  "description": "Only what the SPA uses: reminders, the desktop settings, installing a downloaded update, signing in with a provider in the system browser, printing a list (window.print needs it on macOS), and hearing what a notification, the tray or a menu asks for. Add permissions one by one as desktop features need them.",
   "windows": ["main"],
   "permissions": [
     "allow-set-reminders",
@@ -17,6 +17,7 @@
     "allow-restored-account",
     "allow-sign-out",
     "core:event:allow-listen",
+    "core:webview:allow-print",
     "core:event:allow-unlisten"
   ]
 }

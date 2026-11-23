@@ -78,3 +78,26 @@ test("rename, duplicate and delete a list", async ({ page }) => {
   await page.reload();
   await expect(lists.getByRole("link", { name: /^Food shop/ })).toHaveCount(1);
 });
+
+test("printing a list prints just the list", async ({ page }) => {
+  await page.addInitScript(() => {
+    window.print = () => {
+      (window as unknown as { printed: boolean }).printed = true;
+    };
+  });
+  await page.goto("/lists/inbox");
+  const add = page.getByRole("textbox", { name: "Add a task" });
+  await add.fill("Milk");
+  await add.press("Enter");
+  await expect(page.getByRole("link", { name: "Milk" })).toBeVisible();
+
+  await page.getByRole("button", { name: "List options" }).click();
+  await page.getByRole("menuitem", { name: "Print list" }).click();
+  await expect.poll(() => page.evaluate(() => "printed" in window)).toBe(true);
+
+  await page.emulateMedia({ media: "print" });
+  const sheet = page.locator("#print-root");
+  await expect(sheet.getByRole("heading", { name: "Tasks" })).toBeVisible();
+  await expect(sheet.getByText("Milk")).toBeVisible();
+  await expect(page.locator("#root")).toBeHidden();
+});

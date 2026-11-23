@@ -1,0 +1,62 @@
+/* Only in print: the list on its own, everything else of the page is hidden */
+#print-root {
+  display: none;
+}
+
+@media print {
+  body > :not(#print-root) {
+    display: none;
+  }
+
+  body {
+    background: none;
+    color: #000;
+  }
+
+  #print-root {
+    display: block;
+    font:
+      11pt / 1.5 "Segoe UI",
+      system-ui,
+      sans-serif;
+  }
+
+  #print-root h1 {
+    margin: 0 0 12pt;
+    font-size: 18pt;
+  }
+
+  #print-root h2 {
+    margin: 16pt 0 6pt;
+    font-size: 13pt;
+  }
+
+  #print-root ul {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  #print-root ul ul {
+    padding-left: 22pt;
+  }
+
+  #print-root li {
+    break-inside: avoid;
+  }
+
+  #print-root .box {
+    margin-right: 6pt;
+  }
+
+  #print-root .done > span:not(.box) {
+    color: #555;
+    text-decoration: line-through;
+  }
+
+  #print-root .star,
+  #print-root .due {
+    margin-left: 6pt;
+    color: #555;
+  }
+}
