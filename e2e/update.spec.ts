@@ -59,6 +59,8 @@ test.afterAll(() => {
 });
 
 test("a new version waits for Reload, then takes over", async ({ page }) => {
+  // Past the landing page, it's the app this is about
+  await page.addInitScript(() => localStorage.setItem("doozly:welcomed", "1"));
   await page.goto(`${origin}/`);
   await expect(page.getByRole("textbox", { name: "Add a task" })).toBeVisible();
   await page.evaluate(async () => {

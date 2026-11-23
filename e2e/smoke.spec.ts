@@ -1,7 +1,23 @@
 import { expect, test } from "./fixtures.ts";
 import { stored } from "./helpers.ts";
 
+test("a first visit lands on the welcome page, Get started opens My Day", async ({
+  page,
+}) => {
+  await page.goto("/");
+  await expect(
+    page.getByRole("heading", { level: 1, name: "Your tasks, kept simple." }),
+  ).toBeVisible();
+  await page.getByRole("button", { name: "Get started" }).click();
+  await expect(page).toHaveURL(/\/lists\/my-day$/);
+
+  // From then on "/" opens the app straight away
+  await page.goto("/");
+  await expect(page).toHaveURL(/\/lists\/my-day$/);
+});
+
 test("app opens on My Day, like To Do", async ({ page }) => {
+  await page.addInitScript(() => localStorage.setItem("doozly:welcomed", "1"));
   await page.goto("/");
   await expect(page).toHaveURL(/\/lists\/my-day$/);
   await expect(page).toHaveTitle("My Day - Doozly");

@@ -1,12 +1,13 @@
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
-import { App } from "./App.tsx";
+import { App, Landing } from "./App.tsx";
 import { SessionProvider } from "./app/account/SessionContext.tsx";
 import { listenForInstall } from "./app/pwa/install.ts";
 import {
   registerServiceWorker,
   watchDesktopUpdates,
 } from "./app/pwa/serviceWorker.ts";
+import { welcomedBefore } from "./app/welcome/useWelcome.ts";
 import { openDb } from "./data/db.ts";
 import { isDesktop } from "./platform.ts";
 import { AppProvider } from "./state/AppContext.tsx";
@@ -30,6 +31,8 @@ if (import.meta.env.DEV && location.pathname === "/dev/sync") {
 
 async function start(root: HTMLElement) {
   listenForInstall();
+  // Maybe a first visit, then the landing page loads while the database opens
+  if (!welcomedBefore() && !isDesktop()) void Landing.preload();
   try {
     // A newer tab wants to upgrade the database, so this old one steps aside
     const db = await openDb({ onBlocking: () => location.reload() });

@@ -22,7 +22,7 @@ async function renderApp() {
   const t = await testApp();
   render(
     <AppProvider value={{ app: t.app, actions: t.actions }}>
-      <Router hook={memoryLocation({ path: "/" }).hook}>
+      <Router hook={memoryLocation({ path: "/lists/inbox" }).hook}>
         <App />
       </Router>
     </AppProvider>,

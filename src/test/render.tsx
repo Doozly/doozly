@@ -1,7 +1,7 @@
 import { render } from "@testing-library/react";
 import { Router } from "wouter";
 import { memoryLocation } from "wouter/memory-location";
-import { App } from "../App.tsx";
+import { App, Landing } from "../App.tsx";
 import { SessionProvider } from "../app/account/SessionContext.tsx";
 import { ThemePicker } from "../app/lists/useListMenu.tsx";
 import { AccountButton, DetailPane } from "../app/Shell.tsx";
@@ -23,6 +23,7 @@ export async function renderApp(
   await Promise.all([
     DetailPane.preload(),
     AccountButton.preload(),
+    Landing.preload(),
     preloadContextMenu(),
     preloadMenuButton(),
     ThemePicker.preload(),

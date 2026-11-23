@@ -47,6 +47,15 @@ async function seed(page: Page) {
 }
 
 for (const scheme of ["light", "dark"] as const) {
+  test(`the landing page passes axe (${scheme})`, async ({ page }) => {
+    await page.emulateMedia({ colorScheme: scheme });
+    await page.goto("/");
+    await expect(
+      page.getByRole("button", { name: "Get started" }),
+    ).toBeVisible();
+    await check(page, "landing page");
+  });
+
   test(`lists, details, menus and dialogs pass axe (${scheme})`, async ({
     page,
   }) => {

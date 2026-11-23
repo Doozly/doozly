@@ -1,0 +1,143 @@
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+  align-items: center;
+  justify-content: center;
+  min-height: 100dvh;
+  padding: var(--space-8) var(--space-4);
+  background: var(--color-bg);
+  color: var(--color-text);
+}
+
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  width: 100%;
+  max-width: 420px;
+  padding: var(--space-8);
+  border-radius: var(--radius-xl);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-medium);
+}
+
+@media (max-width: 480px) {
+  .card {
+    padding: var(--space-6) var(--space-5);
+  }
+}
+
+.logo {
+  margin-bottom: var(--space-2);
+  color: var(--accent);
+}
+
+.title {
+  margin: 0;
+  font: var(--font-title);
+}
+
+.lead {
+  margin: 0;
+  color: var(--color-text-secondary);
+}
+
+.hint,
+.error {
+  margin: 0;
+  color: var(--color-text-secondary);
+  font: var(--font-caption);
+  text-align: center;
+}
+
+.error {
+  color: var(--color-danger);
+}
+
+.start,
+.provider {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  padding: 0 var(--space-4);
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  color: var(--color-text);
+  font: var(--font-body-strong);
+  cursor: pointer;
+  transition: background-color var(--duration-fast) var(--ease-standard);
+}
+
+.start {
+  margin-top: var(--space-3);
+  border-color: var(--accent);
+  background: var(--accent);
+  color: var(--accent-on);
+}
+
+.start[data-hovered] {
+  background: var(--accent-hover);
+}
+
+.start[data-pressed] {
+  background: var(--accent-pressed);
+}
+
+.provider[data-hovered] {
+  background: var(--color-surface-hover);
+}
+
+.provider[data-pressed] {
+  background: var(--color-surface-pressed);
+}
+
+.provider[data-disabled] {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.start[data-focus-visible],
+.provider[data-focus-visible] {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
+.providers {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.divider {
+  display: flex;
+  gap: var(--space-3);
+  align-items: center;
+  margin: var(--space-3) 0 0;
+  color: var(--color-text-secondary);
+  font: var(--font-caption);
+  white-space: nowrap;
+}
+
+.divider::before,
+.divider::after {
+  flex: 1;
+  height: 1px;
+  background: var(--color-border);
+  content: "";
+}
+
+.footer {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  justify-content: center;
+  color: var(--color-text-secondary);
+  font: var(--font-caption);
+}
+
+.footer a {
+  color: var(--accent);
+}
